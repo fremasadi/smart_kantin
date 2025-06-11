@@ -65,11 +65,14 @@ class MuridResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')
-                    ->label('Orangtua')
+                Tables\Columns\TextColumn::make('mruid.name')
+                    ->label('Nama')
                     ->sortable()
                     ->searchable(),
-
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Nama Orangtua')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('nisn')
                     ->searchable(),
                 // Tables\Columns\TextColumn::make('tempat_lahir')
