@@ -172,7 +172,7 @@ class ProductResource extends Resource
                     ->query(fn ($query) => $query->where('stok', '<=', 10)->where('stok', '>', 0)),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                // Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
