@@ -176,11 +176,11 @@
     </style>
 </head>
 <body>
-    <!-- Tombol print manual (akan hilang saat print) -->
+    {{-- <!-- Tombol print manual (akan hilang saat print) -->
     <div class="no-print" style="text-align: center; padding: 20px;">
         <button class="print-button" onclick="window.print()">🖨️ Print Struk</button>
         <button class="print-button" onclick="window.close()" style="background: #6c757d;">❌ Tutup</button>
-    </div>
+    </div> --}}
 
     <div class="receipt">
         <!-- Header -->
