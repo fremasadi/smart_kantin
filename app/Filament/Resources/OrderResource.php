@@ -208,8 +208,8 @@ class OrderResource extends Resource
                                 ->label('Metode Pembayaran')
                                 ->options([
                                     'tunai' => '💵 Tunai',
-                                    'transfer' => '🏧 Transfer Bank',
-                                    'qris' => '📱 QRIS'
+                                    // 'transfer' => '🏧 Transfer Bank',
+                                    // 'qris' => '📱 QRIS'
                                 ])
                                 ->default('tunai')
                                 ->required()

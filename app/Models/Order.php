@@ -34,7 +34,7 @@ class Order extends Model
 
     public static function generateNomorPesanan()
     {
-        $prefix = 'SunanAmpel-' . date('Ymd') . '-';
+        $prefix = 'SunanAmpel-' . date('Ymd');
         $lastOrder = self::where('nomor_pesanan', 'like', $prefix . '%')
             ->latest()
             ->first();

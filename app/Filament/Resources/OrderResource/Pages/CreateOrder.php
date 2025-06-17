@@ -97,24 +97,16 @@ class CreateOrder extends CreateRecord
             ->success()
             ->duration(3000)
             ->send();
+            
+        // Buka halaman print di tab baru
+        $printUrl = route('order.print', $this->record->id);
+        $this->js("window.open('{$printUrl}', '_blank', 'width=400,height=650,scrollbars=yes,resizable=yes,menubar=no,toolbar=no')");
     }
     
     protected function getRedirectUrl(): string
     {
         // Redirect ke index setelah create
         return $this->getResource()::getUrl('index');
-    }
-    
-    // Override method untuk menambahkan JavaScript
-    public function getExtraBodyAttributes(): array
-    {
-        return [
-            'x-data' => '{
-                openPrintPage(url) {
-                    window.open(url, "_blank", "width=400,height=650,scrollbars=yes,resizable=yes,menubar=no,toolbar=no");
-                }
-            }'
-        ];
     }
     
     // Override form actions untuk menambahkan tombol print
@@ -128,14 +120,7 @@ class CreateOrder extends CreateRecord
                 ->icon('heroicon-o-printer')
                 ->color('success')
                 ->keyBindings(['mod+s'])
-                ->action(function () {
-                    // Simpan order
-                    $this->create();
-                    
-                    // Buka print page
-                    $printUrl = route('order.print', $this->record->id);
-                    $this->dispatch('open-print-window', ['url' => $printUrl]);
-                }),
+                ->action('create'),
             $this->getCreateFormAction(),
         ];
     }

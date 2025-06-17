@@ -185,9 +185,7 @@
     <div class="receipt">
         <!-- Header -->
         <div class="header">
-            <div class="company-name">{{ $company_name }}</div>
-            <div class="company-info">{{ $company_address }}</div>
-            <div class="company-info">Telp: {{ $company_phone }}</div>
+            <div class="company-name">SD Sunan Ampel</div>
         </div>
 
         <!-- Order Info -->
@@ -199,15 +197,11 @@
                 </tr>
                 <tr>
                     <td>Tanggal</td>
-                    <td>: {{ $order->tanggal_order->format('d/m/Y H:i') }}</td>
+                    <td>: {{ $order->tanggal_pesanan->format('d/m/Y H:i') }}</td>
                 </tr>
                 <tr>
                     <td>Pelanggan</td>
                     <td>: {{ $order->nama_pelanggan }}</td>
-                </tr>
-                <tr>
-                    <td>Kasir</td>
-                    <td>: {{ $order->user->name ?? 'Admin' }}</td>
                 </tr>
             </table>
         </div>
@@ -243,11 +237,6 @@
                 <span>Subtotal ({{ $total_items }} item)</span>
                 <span>Rp {{ number_format($order->total_harga, 0, ',', '.') }}</span>
             </div>
-            {{-- Jika ada diskon atau pajak bisa ditambahkan di sini --}}
-            {{-- <div class="total-row">
-                <span>Diskon</span>
-                <span>Rp {{ number_format($order->diskon ?? 0, 0, ',', '.') }}</span>
-            </div> --}}
             
             <div class="total-row total-final">
                 <span>TOTAL</span>
