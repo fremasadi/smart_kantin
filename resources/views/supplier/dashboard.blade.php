@@ -121,11 +121,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Pendapatan (Rp)',
                     data: chartData.pendapatan,
-                    borderColor: '#4e73df',
-                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
-                    borderWidth: 2,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    borderWidth: 3,
                     fill: true,
-                    tension: 0.3
+                    tension: 0.3,
+                    pointBackgroundColor: '#007bff',
+                    pointBorderColor: '#007bff',
+                    pointRadius: 5
                 }]
             },
             options: {
@@ -164,13 +167,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     datasets: [{
                         data: Object.values(produkData),
                         backgroundColor: [
-                            '#4e73df',
-                            '#1cc88a',
-                            '#36b9cc',
-                            '#f6c23e',
-                            '#e74a3b'
+                            '#007bff',
+                            '#28a745',
+                            '#17a2b8',
+                            '#ffc107',
+                            '#dc3545'
                         ],
-                        borderWidth: 2
+                        borderColor: '#fff',
+                        borderWidth: 3
                     }]
                 },
                 options: {
@@ -199,9 +203,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Jumlah Pesanan',
                     data: chartData.pesananMingguan,
-                    backgroundColor: 'rgba(28, 200, 138, 0.8)',
-                    borderColor: '#1cc88a',
-                    borderWidth: 1
+                    backgroundColor: 'rgba(0, 123, 255, 0.8)',
+                    borderColor: '#007bff',
+                    borderWidth: 2
                 }]
             },
             options: {
