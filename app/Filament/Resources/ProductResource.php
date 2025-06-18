@@ -12,6 +12,7 @@ use Filament\Tables\Table;
 use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Filters\SelectFilter;
+use App\Models\User;
 
 class ProductResource extends Resource
 {
@@ -35,6 +36,16 @@ class ProductResource extends Resource
                             ->label('Nama Produk')
                             ->required()
                             ->maxLength(255),
+                            Forms\Components\Select::make('supplier_id')
+                            ->label('Nama Supplier')
+                            ->options(
+                                User::where('role', 'supplier') // filter berdasarkan role
+                                    ->pluck('name', 'id')       // format: [id => name]
+                                    ->toArray()
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->required(),
                         
                         Forms\Components\Textarea::make('deskripsi')
                             ->label('Deskripsi')
@@ -62,9 +73,6 @@ class ProductResource extends Resource
                                 'Makanan',
                                 'Minuman',
                                 'Snack',
-                                'Aksesoris',
-                                'Elektronik',
-                                'Pakaian',
                                 'Lainnya'
                             ]),
                         
@@ -93,7 +101,8 @@ class ProductResource extends Resource
                             ->directory('products')
                             ->visibility('public')
                             ->columnSpanFull(),
-                    ])
+                            ]),
+                    
             ]);
     }
 
@@ -110,6 +119,11 @@ class ProductResource extends Resource
                     ->label('Nama Produk')
                     ->searchable()
                     ->sortable(),
+                    Tables\Columns\TextColumn::make('supplier.name')
+                    ->label('Nama Supplier')
+                    ->searchable()
+                    ->sortable(),
+                
                 
                 Tables\Columns\TextColumn::make('kategori')
                     ->label('Kategori')
@@ -132,25 +146,25 @@ class ProductResource extends Resource
                         default => 'success',
                     }),
                 
-                Tables\Columns\TextColumn::make('status')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'aktif' => 'success',
-                        'nonaktif' => 'danger',
-                    }),
+                // Tables\Columns\TextColumn::make('status')
+                //     ->label('Status')
+                //     ->badge()
+                //     ->color(fn (string $state): string => match ($state) {
+                //         'aktif' => 'success',
+                //         'nonaktif' => 'danger',
+                //     }),
                 
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                // Tables\Columns\TextColumn::make('created_at')
+                //     ->label('Dibuat')
+                //     ->dateTime()
+                //     ->sortable()
+                //     ->toggleable(isToggledHiddenByDefault: true),
                 
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Diperbarui')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                // Tables\Columns\TextColumn::make('updated_at')
+                //     ->label('Diperbarui')
+                //     ->dateTime()
+                //     ->sortable()
+                //     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User; // pastikan ini ada di bagian atas
 
 class Product extends Model
 {
@@ -16,7 +17,9 @@ class Product extends Model
         'stok',
         'kategori',
         'gambar',
-        'status'
+        'status',
+        'supplier_id', // tambahkan ini
+
     ];
 
     protected $casts = [
@@ -33,4 +36,9 @@ class Product extends Model
     {
         return $query->where('status', 'aktif');
     }
+
+    public function supplier()
+{
+    return $this->belongsTo(User::class, 'supplier_id');
+}
 }

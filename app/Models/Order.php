@@ -58,9 +58,4 @@ class Order extends Model
         $order->tanggal_pesanan = now();
     });
 }
-
-public function print(Order $order)
-{
-    return view('order.print', compact('order'));
-}
 }
