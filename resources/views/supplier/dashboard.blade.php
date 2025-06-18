@@ -45,8 +45,8 @@
                 <h6 class="m-0 font-weight-bold text-primary">Pendapatan Bulanan (6 Bulan Terakhir)</h6>
             </div>
             <div class="card-body">
-                <div style="position: relative; height: 300px;">
-                    <canvas id="pendapatanChart"></canvas>
+                <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="pendapatanChart" style="display: block; width: 100%; height: 100%;"></canvas>
                 </div>
             </div>
         </div>
@@ -59,8 +59,8 @@
                 <h6 class="m-0 font-weight-bold text-primary">Produk Terlaris</h6>
             </div>
             <div class="card-body">
-                <div style="position: relative; height: 300px;" id="produkChartContainer">
-                    <canvas id="produkChart"></canvas>
+                <div class="chart-container" style="position: relative; height: 300px; width: 100%;" id="produkChartContainer">
+                    <canvas id="produkChart" style="display: block; width: 100%; height: 100%;"></canvas>
                 </div>
             </div>
         </div>
@@ -75,9 +75,23 @@
                 <h6 class="m-0 font-weight-bold text-primary">Penjualan Mingguan (4 Minggu Terakhir)</h6>
             </div>
             <div class="card-body">
-                <div style="position: relative; height: 300px;">
-                    <canvas id="mingguanChart"></canvas>
+                <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="mingguanChart" style="display: block; width: 100%; height: 100%;"></canvas>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Debug Info (Remove in production) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-danger">Debug Info (Remove in production)</h6>
+            </div>
+            <div class="card-body">
+                <pre id="debugInfo" style="font-size: 12px; background: #f8f9fa; padding: 10px; border-radius: 4px;"></pre>
             </div>
         </div>
     </div>
@@ -86,51 +100,43 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Logging functions untuk Laravel log
-    function logToLaravel(level, message, data = null) {
-        fetch('/log-frontend', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-            },
-            body: JSON.stringify({
-                level: level,
-                message: message,
-                data: data,
-                url: window.location.href,
-                timestamp: new Date().toISOString()
-            })
-        }).catch(e => console.error('Failed to log to Laravel:', e));
+    console.log('=== FRONTEND CHART DEBUG START ===');
+
+    // Debug info element
+    const debugInfo = document.getElementById('debugInfo');
+    function addDebug(message) {
+        console.log(message);
+        if (debugInfo) {
+            debugInfo.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+        }
     }
 
-    logToLaravel('info', '=== FRONTEND CHART DEBUG START ===');
-    logToLaravel('info', 'DOM loaded, starting chart initialization');
+    addDebug('DOM loaded, starting chart initialization');
 
     // Check if Chart.js is loaded
     if (typeof Chart === 'undefined') {
-        logToLaravel('error', 'Chart.js library is not loaded!');
+        addDebug('ERROR: Chart.js library is not loaded!');
         return;
     } else {
-        logToLaravel('info', 'Chart.js library loaded successfully, version: ' + Chart.version);
+        addDebug('Chart.js library loaded successfully, version: ' + Chart.version);
     }
 
     // Parse data JSON dengan aman
     let chartData;
     try {
         chartData = {!! json_encode($chartData) !!};
-        logToLaravel('info', 'Chart data parsed successfully', chartData);
+        addDebug('Chart data parsed successfully: ' + JSON.stringify(chartData));
     } catch (error) {
-        logToLaravel('error', 'Error parsing chart data: ' + error.message);
+        addDebug('ERROR parsing chart data: ' + error.message);
         return;
     }
 
     // Validasi data
     if (!chartData || typeof chartData !== 'object') {
-        logToLaravel('error', 'Invalid chart data structure');
+        addDebug('ERROR: Invalid chart data structure');
         return;
     }
 
@@ -145,28 +151,33 @@ document.addEventListener('DOMContentLoaded', function() {
         mingguan: !!mingguanCanvas
     };
 
-    logToLaravel('info', 'Canvas elements status', canvasStatus);
+    addDebug('Canvas elements status: ' + JSON.stringify(canvasStatus));
 
     if (!pendapatanCanvas || !produkCanvas || !mingguanCanvas) {
-        logToLaravel('error', 'One or more canvas elements not found!');
+        addDebug('ERROR: One or more canvas elements not found!');
         return;
     }
 
+    // Destroy existing charts if they exist
+    Chart.getChart('pendapatanChart')?.destroy();
+    Chart.getChart('produkChart')?.destroy();
+    Chart.getChart('mingguanChart')?.destroy();
+
     // Chart Pendapatan Bulanan
     try {
-        logToLaravel('info', 'Creating pendapatan chart...');
+        addDebug('Creating pendapatan chart...');
         const pendapatanCtx = pendapatanCanvas.getContext('2d');
 
         // Validasi data pendapatan
         const pendapatanLabels = chartData.bulan || [];
-        const pendapatanValues = chartData.pendapatan || [];
+        const pendapatanValues = (chartData.pendapatan || []).map(val => Number(val));
 
-        logToLaravel('info', 'Pendapatan chart data', {
-            labels: pendapatanLabels,
-            values: pendapatanValues,
-            labelsLength: pendapatanLabels.length,
-            valuesLength: pendapatanValues.length
-        });
+        addDebug('Pendapatan chart data - Labels: ' + JSON.stringify(pendapatanLabels));
+        addDebug('Pendapatan chart data - Values: ' + JSON.stringify(pendapatanValues));
+
+        if (pendapatanLabels.length === 0) {
+            addDebug('WARNING: No pendapatan labels found');
+        }
 
         const pendapatanChart = new Chart(pendapatanCtx, {
             type: 'line',
@@ -181,69 +192,101 @@ document.addEventListener('DOMContentLoaded', function() {
                     fill: true,
                     tension: 0.3,
                     pointBackgroundColor: '#007bff',
-                    pointBorderColor: '#007bff',
-                    pointRadius: 5
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
                                 return 'Rp ' + value.toLocaleString('id-ID');
-                            }
+                            },
+                            color: '#6c757d'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#6c757d'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
                         }
                     }
                 },
                 plugins: {
                     legend: {
-                        display: true
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Pendapatan: Rp ' + context.parsed.y.toLocaleString('id-ID');
+                            }
+                        }
                     }
                 }
             }
         });
-        logToLaravel('info', 'Pendapatan chart created successfully');
+        addDebug('Pendapatan chart created successfully');
     } catch (error) {
-        logToLaravel('error', 'Error creating pendapatan chart: ' + error.message, {
-            stack: error.stack
-        });
+        addDebug('ERROR creating pendapatan chart: ' + error.message);
+        console.error('Pendapatan chart error:', error);
     }
 
     // Chart Produk Terlaris
     try {
-        logToLaravel('info', 'Creating produk chart...');
+        addDebug('Creating produk chart...');
         const produkCtx = produkCanvas.getContext('2d');
         const produkData = chartData.produkTerlaris || {};
 
-        logToLaravel('info', 'Produk chart data', produkData);
+        addDebug('Produk chart data: ' + JSON.stringify(produkData));
 
         if (Object.keys(produkData).length === 0) {
-            logToLaravel('info', 'No product data, showing empty state');
+            addDebug('No product data, showing empty state');
             document.getElementById('produkChartContainer').innerHTML =
-                '<div class="d-flex align-items-center justify-content-center h-100">' +
+                '<div class="d-flex align-items-center justify-content-center" style="height: 300px;">' +
                 '<div class="text-center text-muted">' +
                 '<i class="fas fa-chart-pie fa-3x mb-3"></i><br>' +
                 'Belum ada data penjualan produk' +
                 '</div></div>';
         } else {
+            const produkLabels = Object.keys(produkData);
+            const produkValues = Object.values(produkData).map(val => Number(val));
+
             const produkChart = new Chart(produkCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(produkData),
+                    labels: produkLabels,
                     datasets: [{
-                        data: Object.values(produkData),
+                        data: produkValues,
                         backgroundColor: [
                             '#007bff',
                             '#28a745',
                             '#17a2b8',
                             '#ffc107',
-                            '#dc3545'
+                            '#dc3545',
+                            '#6f42c1',
+                            '#fd7e14',
+                            '#20c997'
                         ],
                         borderColor: '#fff',
-                        borderWidth: 2
+                        borderWidth: 2,
+                        hoverBorderWidth: 3
                     }]
                 },
                 options: {
@@ -251,34 +294,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'bottom'
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + ' terjual';
+                                }
+                            }
                         }
                     }
                 }
             });
-            logToLaravel('info', 'Produk chart created successfully');
+            addDebug('Produk chart created successfully');
         }
     } catch (error) {
-        logToLaravel('error', 'Error creating produk chart: ' + error.message, {
-            stack: error.stack
-        });
+        addDebug('ERROR creating produk chart: ' + error.message);
+        console.error('Produk chart error:', error);
     }
 
     // Chart Penjualan Mingguan
     try {
-        logToLaravel('info', 'Creating mingguan chart...');
+        addDebug('Creating mingguan chart...');
         const mingguanCtx = mingguanCanvas.getContext('2d');
 
         // Validasi data mingguan
         const mingguanLabels = chartData.minggu || [];
-        const mingguanValues = chartData.pesananMingguan || [];
+        const mingguanValues = (chartData.pesananMingguan || []).map(val => Number(val));
 
-        logToLaravel('info', 'Mingguan chart data', {
-            labels: mingguanLabels,
-            values: mingguanValues,
-            labelsLength: mingguanLabels.length,
-            valuesLength: mingguanValues.length
-        });
+        addDebug('Mingguan chart data - Labels: ' + JSON.stringify(mingguanLabels));
+        addDebug('Mingguan chart data - Values: ' + JSON.stringify(mingguanValues));
 
         const mingguanChart = new Chart(mingguanCtx, {
             type: 'bar',
@@ -289,7 +338,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     data: mingguanValues,
                     backgroundColor: 'rgba(0, 123, 255, 0.8)',
                     borderColor: '#007bff',
-                    borderWidth: 2
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    borderSkipped: false
                 }]
             },
             options: {
@@ -299,25 +350,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            stepSize: 1
+                            stepSize: 1,
+                            color: '#6c757d'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#6c757d'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
                         }
                     }
                 },
                 plugins: {
                     legend: {
-                        display: true
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Pesanan: ' + context.parsed.y;
+                            }
+                        }
                     }
                 }
             }
         });
-        logToLaravel('info', 'Mingguan chart created successfully');
+        addDebug('Mingguan chart created successfully');
     } catch (error) {
-        logToLaravel('error', 'Error creating mingguan chart: ' + error.message, {
-            stack: error.stack
-        });
+        addDebug('ERROR creating mingguan chart: ' + error.message);
+        console.error('Mingguan chart error:', error);
     }
 
-    logToLaravel('info', '=== FRONTEND CHART DEBUG END ===');
+    addDebug('=== FRONTEND CHART DEBUG END ===');
 });
 </script>
 @endpush
