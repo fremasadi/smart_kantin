@@ -37,7 +37,7 @@ Route::middleware(['auth', 'role:supplier'])->group(function () {
         Auth::logout();
         return redirect('/login');
     })->name('logout');
-    
+
 });
 
 
@@ -45,3 +45,37 @@ Route::middleware(['auth', 'role:supplier'])->group(function () {
 Route::put('/transaksi/{id}/terima', [TerimaTransaksiController::class, 'terima'])->name('transaksi.terima');
 Route::get('/order/{order}/print', [OrderController::class, 'print'])
     ->name('order.print');
+
+
+// Tambahkan di routes/web.php
+Route::post('/log-frontend', function (Request $request) {
+    $level = $request->input('level', 'info');
+    $message = $request->input('message', '');
+    $data = $request->input('data');
+    $url = $request->input('url', '');
+    $timestamp = $request->input('timestamp', now());
+
+    $logMessage = "[FRONTEND] {$message}";
+    if ($url) {
+        $logMessage .= " | URL: {$url}";
+    }
+    if ($data) {
+        $logMessage .= " | Data: " . json_encode($data);
+    }
+
+    switch ($level) {
+        case 'error':
+            Log::error($logMessage);
+            break;
+        case 'warning':
+            Log::warning($logMessage);
+            break;
+        case 'debug':
+            Log::debug($logMessage);
+            break;
+        default:
+            Log::info($logMessage);
+    }
+
+    return response()->json(['status' => 'logged']);
+})->middleware(['web', 'auth']);

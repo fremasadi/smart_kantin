@@ -86,24 +86,51 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded');
+    // Logging functions untuk Laravel log
+    function logToLaravel(level, message, data = null) {
+        fetch('/log-frontend', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            },
+            body: JSON.stringify({
+                level: level,
+                message: message,
+                data: data,
+                url: window.location.href,
+                timestamp: new Date().toISOString()
+            })
+        }).catch(e => console.error('Failed to log to Laravel:', e));
+    }
+
+    logToLaravel('info', '=== FRONTEND CHART DEBUG START ===');
+    logToLaravel('info', 'DOM loaded, starting chart initialization');
+
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        logToLaravel('error', 'Chart.js library is not loaded!');
+        return;
+    } else {
+        logToLaravel('info', 'Chart.js library loaded successfully, version: ' + Chart.version);
+    }
 
     // Parse data JSON dengan aman
     let chartData;
     try {
         chartData = {!! json_encode($chartData) !!};
-        console.log('Chart Data:', chartData);
+        logToLaravel('info', 'Chart data parsed successfully', chartData);
     } catch (error) {
-        console.error('Error parsing chart data:', error);
+        logToLaravel('error', 'Error parsing chart data: ' + error.message);
         return;
     }
 
     // Validasi data
     if (!chartData || typeof chartData !== 'object') {
-        console.error('Invalid chart data');
+        logToLaravel('error', 'Invalid chart data structure');
         return;
     }
 
@@ -112,28 +139,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const produkCanvas = document.getElementById('produkChart');
     const mingguanCanvas = document.getElementById('mingguanChart');
 
-    console.log('Canvas elements:', {
-        pendapatan: pendapatanCanvas,
-        produk: produkCanvas,
-        mingguan: mingguanCanvas
-    });
+    const canvasStatus = {
+        pendapatan: !!pendapatanCanvas,
+        produk: !!produkCanvas,
+        mingguan: !!mingguanCanvas
+    };
+
+    logToLaravel('info', 'Canvas elements status', canvasStatus);
 
     if (!pendapatanCanvas || !produkCanvas || !mingguanCanvas) {
-        console.error('Canvas elements not found!');
+        logToLaravel('error', 'One or more canvas elements not found!');
         return;
     }
 
     // Chart Pendapatan Bulanan
     try {
+        logToLaravel('info', 'Creating pendapatan chart...');
         const pendapatanCtx = pendapatanCanvas.getContext('2d');
 
         // Validasi data pendapatan
         const pendapatanLabels = chartData.bulan || [];
         const pendapatanValues = chartData.pendapatan || [];
 
-        console.log('Pendapatan data:', { labels: pendapatanLabels, values: pendapatanValues });
+        logToLaravel('info', 'Pendapatan chart data', {
+            labels: pendapatanLabels,
+            values: pendapatanValues,
+            labelsLength: pendapatanLabels.length,
+            valuesLength: pendapatanValues.length
+        });
 
-        new Chart(pendapatanCtx, {
+        const pendapatanChart = new Chart(pendapatanCtx, {
             type: 'line',
             data: {
                 labels: pendapatanLabels,
@@ -170,19 +205,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        console.log('Pendapatan chart created successfully');
+        logToLaravel('info', 'Pendapatan chart created successfully');
     } catch (error) {
-        console.error('Error creating pendapatan chart:', error);
+        logToLaravel('error', 'Error creating pendapatan chart: ' + error.message, {
+            stack: error.stack
+        });
     }
 
     // Chart Produk Terlaris
     try {
+        logToLaravel('info', 'Creating produk chart...');
         const produkCtx = produkCanvas.getContext('2d');
         const produkData = chartData.produkTerlaris || {};
 
-        console.log('Produk data:', produkData);
+        logToLaravel('info', 'Produk chart data', produkData);
 
         if (Object.keys(produkData).length === 0) {
+            logToLaravel('info', 'No product data, showing empty state');
             document.getElementById('produkChartContainer').innerHTML =
                 '<div class="d-flex align-items-center justify-content-center h-100">' +
                 '<div class="text-center text-muted">' +
@@ -190,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Belum ada data penjualan produk' +
                 '</div></div>';
         } else {
-            new Chart(produkCtx, {
+            const produkChart = new Chart(produkCtx, {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(produkData),
@@ -217,23 +256,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             });
-            console.log('Produk chart created successfully');
+            logToLaravel('info', 'Produk chart created successfully');
         }
     } catch (error) {
-        console.error('Error creating produk chart:', error);
+        logToLaravel('error', 'Error creating produk chart: ' + error.message, {
+            stack: error.stack
+        });
     }
 
     // Chart Penjualan Mingguan
     try {
+        logToLaravel('info', 'Creating mingguan chart...');
         const mingguanCtx = mingguanCanvas.getContext('2d');
 
         // Validasi data mingguan
         const mingguanLabels = chartData.minggu || [];
         const mingguanValues = chartData.pesananMingguan || [];
 
-        console.log('Mingguan data:', { labels: mingguanLabels, values: mingguanValues });
+        logToLaravel('info', 'Mingguan chart data', {
+            labels: mingguanLabels,
+            values: mingguanValues,
+            labelsLength: mingguanLabels.length,
+            valuesLength: mingguanValues.length
+        });
 
-        new Chart(mingguanCtx, {
+        const mingguanChart = new Chart(mingguanCtx, {
             type: 'bar',
             data: {
                 labels: mingguanLabels,
@@ -263,10 +310,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        console.log('Mingguan chart created successfully');
+        logToLaravel('info', 'Mingguan chart created successfully');
     } catch (error) {
-        console.error('Error creating mingguan chart:', error);
+        logToLaravel('error', 'Error creating mingguan chart: ' + error.message, {
+            stack: error.stack
+        });
     }
+
+    logToLaravel('info', '=== FRONTEND CHART DEBUG END ===');
 });
 </script>
 @endpush
