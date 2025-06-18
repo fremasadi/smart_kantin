@@ -83,20 +83,6 @@
     </div>
 </div>
 
-<!-- Debug Info (Remove in production) -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold text-danger">Debug Info (Remove in production)</h6>
-            </div>
-            <div class="card-body">
-                <pre id="debugInfo" style="font-size: 12px; background: #f8f9fa; padding: 10px; border-radius: 4px;"></pre>
-            </div>
-        </div>
-    </div>
-</div>
-
 @endsection
 
 @push('scripts')
