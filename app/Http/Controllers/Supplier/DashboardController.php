@@ -29,10 +29,6 @@ class DashboardController extends Controller
         // Data untuk Chart
         $chartData = $this->getChartData($supplierId);
 
-        // Debug: Cek data yang dikirim
-        \Log::info('Chart Data:', $chartData);
-        dd($chartData); // Temporary untuk debug
-
         return view('supplier.dashboard', compact(
             'jumlahProduk',
             'jumlahPesanan',
