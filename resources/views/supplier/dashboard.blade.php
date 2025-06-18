@@ -35,4 +35,137 @@
         </div>
     </div>
 </div>
+
+<!-- Charts Section -->
+<div class="row mt-4">
+    <!-- Chart Pendapatan Bulanan -->
+    <div class="col-md-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Pendapatan Bulanan (6 Bulan Terakhir)</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="pendapatanChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Produk Terlaris -->
+    <div class="col-md-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Produk Terlaris</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="produkChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Chart Pendapatan Bulanan
+const pendapatanCtx = document.getElementById('pendapatanChart').getContext('2d');
+new Chart(pendapatanCtx, {
+    type: 'line',
+    data: {
+        labels: {!! json_encode($chartData['bulan']) !!},
+        datasets: [{
+            label: 'Pendapatan (Rp)',
+            data: {!! json_encode($chartData['pendapatan']) !!},
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return 'Rp ' + value.toLocaleString('id-ID');
+                    }
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'Pendapatan: Rp ' + context.parsed.y.toLocaleString('id-ID');
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Chart Produk Terlaris
+const produkCtx = document.getElementById('produkChart').getContext('2d');
+new Chart(produkCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {!! json_encode(array_keys($chartData['produkTerlaris'])) !!},
+        datasets: [{
+            data: {!! json_encode(array_values($chartData['produkTerlaris'])) !!},
+            backgroundColor: [
+                '#4e73df',
+                '#1cc88a',
+                '#36b9cc',
+                '#f6c23e',
+                '#e74a3b'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+
+// Chart Penjualan Mingguan
+const mingguanCtx = document.getElementById('mingguanChart').getContext('2d');
+new Chart(mingguanCtx, {
+    type: 'bar',
+    data: {
+        labels: {!! json_encode($chartData['minggu']) !!},
+        datasets: [{
+            label: 'Jumlah Pesanan',
+            data: {!! json_encode($chartData['pesananMingguan']) !!},
+            backgroundColor: 'rgba(28, 200, 138, 0.8)',
+            borderColor: '#1cc88a',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+@endpush

@@ -117,25 +117,26 @@
         }
 
         .login-button {
-            width: 100%;
-            padding: 14px;
-            background-color: Color::Blue,;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
+    width: 100%;
+    padding: 14px;
+    background-color: #007BFF; /* Warna biru */
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
 
-        .login-button:hover {
-            background-color: #D97706;
-        }
+.login-button:hover {
+    background-color: #0056b3; /* Biru lebih gelap saat hover */
+}
 
-        .login-button:active {
-            background-color: #B45309;
-        }
+.login-button:active {
+    background-color: #004085; /* Biru lebih pekat saat ditekan */
+}
+
 
         .error-message {
             color: #dc3545;
