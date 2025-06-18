@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Supplier;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\OrderItem;
+use App\Exports\SupplierOrderExport;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 class LaporanController extends Controller
 {
@@ -21,4 +24,10 @@ class LaporanController extends Controller
 
         return view('supplier.laporan.index', compact('orderItems'));
     }
+
+    public function export()
+{
+    return Excel::download(new SupplierOrderExport, 'laporan_penjualan.xlsx');
+}
+
 }

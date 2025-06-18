@@ -34,6 +34,7 @@ Route::middleware(['auth', 'role:supplier'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::get('dashboard', [DashboardController::class, 'index'])->name('supplier.dashboard');
     Route::get('/laporan-penjualan', [LaporanController::class, 'index'])->name('supplier.laporan');
+    Route::get('/laporan-penjualan/export', [LaporanController::class, 'export'])->name('supplier.laporan.export');
 
     Route::post('/logout', function () {
         Auth::logout();

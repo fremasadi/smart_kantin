@@ -3,6 +3,10 @@
 @section('content')
     <h1 class="h3 mb-4 text-gray-800">Laporan Penjualan</h1>
 
+    <a href="{{ route('supplier.laporan.export') }}" class="btn btn-success mb-3">
+        <i class="fas fa-file-excel"></i> Export ke Excel
+    </a>
+
     <div class="table-responsive">
         <table class="table table-bordered">
             <thead>
