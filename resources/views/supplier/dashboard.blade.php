@@ -45,7 +45,9 @@
                 <h6 class="m-0 font-weight-bold text-primary">Pendapatan Bulanan (6 Bulan Terakhir)</h6>
             </div>
             <div class="card-body">
-                <canvas id="pendapatanChart" width="400" height="200"></canvas>
+                <div style="height: 300px;">
+                    <canvas id="pendapatanChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -57,18 +59,38 @@
                 <h6 class="m-0 font-weight-bold text-primary">Produk Terlaris</h6>
             </div>
             <div class="card-body">
-                <canvas id="produkChart" width="400" height="400"></canvas>
+                <div style="height: 300px;">
+                    <canvas id="produkChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Chart Penjualan Mingguan -->
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Penjualan Mingguan (4 Minggu Terakhir)</h6>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
+                    <canvas id="mingguanChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Debug: Cek data yang diterima
+console.log('Chart Data:', {!! json_encode($chartData) !!});
+
 // Chart Pendapatan Bulanan
 const pendapatanCtx = document.getElementById('pendapatanChart').getContext('2d');
 new Chart(pendapatanCtx, {
@@ -112,33 +134,40 @@ new Chart(pendapatanCtx, {
 
 // Chart Produk Terlaris
 const produkCtx = document.getElementById('produkChart').getContext('2d');
-new Chart(produkCtx, {
-    type: 'doughnut',
-    data: {
-        labels: {!! json_encode(array_keys($chartData['produkTerlaris'])) !!},
-        datasets: [{
-            data: {!! json_encode(array_values($chartData['produkTerlaris'])) !!},
-            backgroundColor: [
-                '#4e73df',
-                '#1cc88a',
-                '#36b9cc',
-                '#f6c23e',
-                '#e74a3b'
-            ],
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom'
+const produkData = {!! json_encode($chartData['produkTerlaris']) !!};
+
+// Jika tidak ada data produk terlaris
+if (Object.keys(produkData).length === 0) {
+    document.getElementById('produkChart').parentElement.innerHTML = 
+        '<div class="text-center text-muted py-4">Belum ada data penjualan produk</div>';
+} else {
+    new Chart(produkCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {!! json_encode(array_keys($chartData['produkTerlaris'])) !!},
+            datasets: [{
+                data: {!! json_encode(array_values($chartData['produkTerlaris'])) !!},
+                backgroundColor: [
+                    '#4e73df',
+                    '#1cc88a',
+                    '#36b9cc',
+                    '#f6c23e',
+                    '#e74a3b'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
             }
         }
-    }
-});
-
+    });
+}
 
 // Chart Penjualan Mingguan
 const mingguanCtx = document.getElementById('mingguanChart').getContext('2d');
