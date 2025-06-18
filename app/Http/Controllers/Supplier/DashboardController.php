@@ -29,10 +29,14 @@ class DashboardController extends Controller
         // Data untuk Chart
         $chartData = $this->getChartData($supplierId);
 
+        // Debug: Cek data yang dikirim
+        \Log::info('Chart Data:', $chartData);
+        dd($chartData); // Temporary untuk debug
+
         return view('supplier.dashboard', compact(
-            'jumlahProduk', 
-            'jumlahPesanan', 
-            'totalPendapatan', 
+            'jumlahProduk',
+            'jumlahPesanan',
+            'totalPendapatan',
             'chartData'
         ));
     }
@@ -56,11 +60,11 @@ class DashboardController extends Controller
 
         $bulanLabels = [];
         $pendapatanData = [];
-        
+
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
             $bulanLabels[] = $date->format('M Y');
-            
+
             $pendapatan = $pendapatanBulanan->where('bulan', $date->month)
                                           ->where('tahun', $date->year)
                                           ->first();
@@ -81,19 +85,19 @@ class DashboardController extends Controller
         // 3. Penjualan Mingguan (4 minggu terakhir)
         $penjualanMingguan = [];
         $mingguLabels = [];
-        
+
         for ($i = 3; $i >= 0; $i--) {
             $startWeek = Carbon::now()->subWeeks($i)->startOfWeek();
             $endWeek = Carbon::now()->subWeeks($i)->endOfWeek();
-            
+
             $mingguLabels[] = 'Minggu ' . ($i == 0 ? 'Ini' : $i + 1);
-            
+
             $jumlahPesanan = OrderItem::whereHas('product', function ($q) use ($supplierId) {
                     $q->where('supplier_id', $supplierId);
                 })
                 ->whereBetween('created_at', [$startWeek, $endWeek])
                 ->count();
-                
+
             $penjualanMingguan[] = $jumlahPesanan;
         }
 
