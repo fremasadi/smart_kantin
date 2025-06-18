@@ -45,7 +45,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">Pendapatan Bulanan (6 Bulan Terakhir)</h6>
             </div>
             <div class="card-body">
-                <div style="height: 300px;">
+                <div style="height: 300px; border: 1px solid #ddd; background-color: #fafafa; padding: 10px;">
                     <canvas id="pendapatanChart"></canvas>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">Produk Terlaris</h6>
             </div>
             <div class="card-body">
-                <div style="height: 300px;">
+                <div style="height: 300px; border: 1px solid #ddd; background-color: #fafafa; padding: 10px;">
                     <canvas id="produkChart"></canvas>
                 </div>
             </div>
@@ -75,7 +75,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">Penjualan Mingguan (4 Minggu Terakhir)</h6>
             </div>
             <div class="card-body">
-                <div style="height: 300px;">
+                <div style="height: 300px; border: 1px solid #ddd; background-color: #fafafa; padding: 10px;">
                     <canvas id="mingguanChart"></canvas>
                 </div>
             </div>
