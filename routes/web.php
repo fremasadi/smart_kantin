@@ -7,6 +7,7 @@ use App\Http\Controllers\SupplierAuthController;
 use App\Http\Controllers\SupplierDashboardController;
 use App\Http\Controllers\Supplier\ProductController;
 use App\Http\Controllers\Supplier\DashboardController;
+use App\Http\Controllers\Supplier\LaporanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +33,7 @@ Route::middleware(['auth', 'role:supplier'])->group(function () {
     Route::get('/supplier/dashboard', [SupplierDashboardController::class, 'index'])->name('supplier.dashboard');
     Route::resource('products', ProductController::class);
     Route::get('dashboard', [DashboardController::class, 'index'])->name('supplier.dashboard');
+    Route::get('/laporan-penjualan', [LaporanController::class, 'index'])->name('supplier.laporan');
 
     Route::post('/logout', function () {
         Auth::logout();
