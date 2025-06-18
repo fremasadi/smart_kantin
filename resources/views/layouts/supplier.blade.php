@@ -60,5 +60,8 @@
 
     <!-- Custom scripts for all pages-->
     <script src="{{ asset('sb-admin-2/js/sb-admin-2.min.js') }}"></script>
+
+    <!-- TAMBAHKAN INI: Stack untuk scripts dari page-specific -->
+    @stack('scripts')
 </body>
 </html>
