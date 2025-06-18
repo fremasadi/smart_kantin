@@ -1,8 +1,108 @@
+@extends('layouts.supplier')
+
+@section('content')
+<h1 class="h3 mb-4 text-gray-800">Dashboard Supplier</h1>
+<p>Selamat datang, {{ auth()->user()->name }}!</p>
+
+<div class="row">
+    <!-- Produk -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Jumlah Produk</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $jumlahProduk }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pesanan -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Jumlah Pesanan</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $jumlahPesanan }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pendapatan -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Pendapatan</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">Rp{{ number_format($totalPendapatan, 0, ',', '.') }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mt-4">
+    <!-- Chart Pendapatan Bulanan -->
+    <div class="col-md-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Pendapatan Bulanan (6 Bulan Terakhir)</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="pendapatanChart" style="display: block; width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Produk Terlaris -->
+    <div class="col-md-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Produk Terlaris</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height: 300px; width: 100%;" id="produkChartContainer">
+                    <canvas id="produkChart" style="display: block; width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Penjualan Mingguan -->
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Penjualan Mingguan (4 Minggu Terakhir)</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="mingguanChart" style="display: block; width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Debug Info (Remove in production) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-danger">Debug Info (Remove in production)</h6>
+            </div>
+            <div class="card-body">
+                <pre id="debugInfo" style="font-size: 12px; background: #f8f9fa; padding: 10px; border-radius: 4px;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+@endsection
+
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
 <script>
-// Pastikan jQuery sudah loaded
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     console.log('=== FRONTEND CHART DEBUG START ===');
 
     // Debug info element
@@ -14,7 +114,7 @@ $(document).ready(function() {
         }
     }
 
-    addDebug('jQuery loaded, DOM ready, starting chart initialization');
+    addDebug('DOM loaded, starting chart initialization');
 
     // Check if Chart.js is loaded
     if (typeof Chart === 'undefined') {
@@ -59,15 +159,9 @@ $(document).ready(function() {
     }
 
     // Destroy existing charts if they exist
-    if (Chart.getChart('pendapatanChart')) {
-        Chart.getChart('pendapatanChart').destroy();
-    }
-    if (Chart.getChart('produkChart')) {
-        Chart.getChart('produkChart').destroy();
-    }
-    if (Chart.getChart('mingguanChart')) {
-        Chart.getChart('mingguanChart').destroy();
-    }
+    Chart.getChart('pendapatanChart')?.destroy();
+    Chart.getChart('produkChart')?.destroy();
+    Chart.getChart('mingguanChart')?.destroy();
 
     // Chart Pendapatan Bulanan
     try {
@@ -164,13 +258,12 @@ $(document).ready(function() {
 
         if (Object.keys(produkData).length === 0) {
             addDebug('No product data, showing empty state');
-            $('#produkChartContainer').html(
+            document.getElementById('produkChartContainer').innerHTML =
                 '<div class="d-flex align-items-center justify-content-center" style="height: 300px;">' +
                 '<div class="text-center text-muted">' +
                 '<i class="fas fa-chart-pie fa-3x mb-3"></i><br>' +
                 'Belum ada data penjualan produk' +
-                '</div></div>'
-            );
+                '</div></div>';
         } else {
             const produkLabels = Object.keys(produkData);
             const produkValues = Object.values(produkData).map(val => Number(val));
