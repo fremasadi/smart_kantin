@@ -39,7 +39,7 @@
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="text-center my-auto">
-                        <span>&copy; Kantin App {{ date('Y') }}</span>
+                        <span>&copy; SmartKantin {{ date('Y') }}</span>
                     </div>
                 </div>
             </footer>
