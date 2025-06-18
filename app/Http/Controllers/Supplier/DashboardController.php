@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\OrderItem;
 use App\Models\Order;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -28,6 +29,9 @@ class DashboardController extends Controller
 
         // Data untuk Chart
         $chartData = $this->getChartData($supplierId);
+
+        // Log untuk debugging
+        Log::info('Chart Data:', $chartData);
 
         return view('supplier.dashboard', compact(
             'jumlahProduk',
@@ -57,6 +61,7 @@ class DashboardController extends Controller
         $bulanLabels = [];
         $pendapatanData = [];
 
+        // Fix: Buat array 6 bulan terakhir dengan benar
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
             $bulanLabels[] = $date->format('M Y');
@@ -64,7 +69,9 @@ class DashboardController extends Controller
             $pendapatan = $pendapatanBulanan->where('bulan', $date->month)
                                           ->where('tahun', $date->year)
                                           ->first();
-            $pendapatanData[] = $pendapatan ? $pendapatan->total : 0;
+
+            // Fix: Convert to float/int to ensure proper JSON encoding
+            $pendapatanData[] = $pendapatan ? (float)$pendapatan->total : 0;
         }
 
         // 2. Produk Terlaris (Top 5)
@@ -75,18 +82,27 @@ class DashboardController extends Controller
             ->orderBy('total_terjual', 'desc')
             ->limit(5)
             ->get()
-            ->pluck('total_terjual', 'nama_produk')
+            ->mapWithKeys(function ($item) {
+                // Fix: Ensure numeric values
+                return [$item->nama_produk => (int)$item->total_terjual];
+            })
             ->toArray();
 
         // 3. Penjualan Mingguan (4 minggu terakhir)
         $penjualanMingguan = [];
         $mingguLabels = [];
 
+        // Fix: Revisi logika minggu labels
         for ($i = 3; $i >= 0; $i--) {
             $startWeek = Carbon::now()->subWeeks($i)->startOfWeek();
             $endWeek = Carbon::now()->subWeeks($i)->endOfWeek();
 
-            $mingguLabels[] = 'Minggu ' . ($i == 0 ? 'Ini' : $i + 1);
+            // Fix: Label minggu yang lebih jelas
+            if ($i == 0) {
+                $mingguLabels[] = 'Minggu Ini';
+            } else {
+                $mingguLabels[] = 'Minggu ke-' . (4 - $i);
+            }
 
             $jumlahPesanan = OrderItem::whereHas('product', function ($q) use ($supplierId) {
                     $q->where('supplier_id', $supplierId);

@@ -45,7 +45,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">Pendapatan Bulanan (6 Bulan Terakhir)</h6>
             </div>
             <div class="card-body">
-                <div style="height: 300px; border: 1px solid #ddd; background-color: #fafafa; padding: 10px;">
+                <div style="position: relative; height: 300px;">
                     <canvas id="pendapatanChart"></canvas>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">Produk Terlaris</h6>
             </div>
             <div class="card-body">
-                <div style="height: 300px; border: 1px solid #ddd; background-color: #fafafa; padding: 10px;">
+                <div style="position: relative; height: 300px;" id="produkChartContainer">
                     <canvas id="produkChart"></canvas>
                 </div>
             </div>
@@ -75,7 +75,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">Penjualan Mingguan (4 Minggu Terakhir)</h6>
             </div>
             <div class="card-body">
-                <div style="height: 300px; border: 1px solid #ddd; background-color: #fafafa; padding: 10px;">
+                <div style="position: relative; height: 300px;">
                     <canvas id="mingguanChart"></canvas>
                 </div>
             </div>
@@ -91,11 +91,23 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded');
 
-    // Debug: Cek data yang diterima
-    const chartData = {!! json_encode($chartData) !!};
-    console.log('Chart Data:', chartData);
+    // Parse data JSON dengan aman
+    let chartData;
+    try {
+        chartData = {!! json_encode($chartData) !!};
+        console.log('Chart Data:', chartData);
+    } catch (error) {
+        console.error('Error parsing chart data:', error);
+        return;
+    }
 
-    // Cek apakah canvas ada
+    // Validasi data
+    if (!chartData || typeof chartData !== 'object') {
+        console.error('Invalid chart data');
+        return;
+    }
+
+    // Get canvas elements
     const pendapatanCanvas = document.getElementById('pendapatanChart');
     const produkCanvas = document.getElementById('produkChart');
     const mingguanCanvas = document.getElementById('mingguanChart');
@@ -114,13 +126,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Chart Pendapatan Bulanan
     try {
         const pendapatanCtx = pendapatanCanvas.getContext('2d');
+
+        // Validasi data pendapatan
+        const pendapatanLabels = chartData.bulan || [];
+        const pendapatanValues = chartData.pendapatan || [];
+
+        console.log('Pendapatan data:', { labels: pendapatanLabels, values: pendapatanValues });
+
         new Chart(pendapatanCtx, {
             type: 'line',
             data: {
-                labels: chartData.bulan,
+                labels: pendapatanLabels,
                 datasets: [{
                     label: 'Pendapatan (Rp)',
-                    data: chartData.pendapatan,
+                    data: pendapatanValues,
                     borderColor: '#007bff',
                     backgroundColor: 'rgba(0, 123, 255, 0.1)',
                     borderWidth: 3,
@@ -143,6 +162,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
                     }
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    }
                 }
             }
         });
@@ -154,11 +178,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Chart Produk Terlaris
     try {
         const produkCtx = produkCanvas.getContext('2d');
-        const produkData = chartData.produkTerlaris;
+        const produkData = chartData.produkTerlaris || {};
+
+        console.log('Produk data:', produkData);
 
         if (Object.keys(produkData).length === 0) {
-            produkCanvas.parentElement.innerHTML =
-                '<div class="text-center text-muted py-4">Belum ada data penjualan produk</div>';
+            document.getElementById('produkChartContainer').innerHTML =
+                '<div class="d-flex align-items-center justify-content-center h-100">' +
+                '<div class="text-center text-muted">' +
+                '<i class="fas fa-chart-pie fa-3x mb-3"></i><br>' +
+                'Belum ada data penjualan produk' +
+                '</div></div>';
         } else {
             new Chart(produkCtx, {
                 type: 'doughnut',
@@ -174,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             '#dc3545'
                         ],
                         borderColor: '#fff',
-                        borderWidth: 3
+                        borderWidth: 2
                     }]
                 },
                 options: {
@@ -196,13 +226,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Chart Penjualan Mingguan
     try {
         const mingguanCtx = mingguanCanvas.getContext('2d');
+
+        // Validasi data mingguan
+        const mingguanLabels = chartData.minggu || [];
+        const mingguanValues = chartData.pesananMingguan || [];
+
+        console.log('Mingguan data:', { labels: mingguanLabels, values: mingguanValues });
+
         new Chart(mingguanCtx, {
             type: 'bar',
             data: {
-                labels: chartData.minggu,
+                labels: mingguanLabels,
                 datasets: [{
                     label: 'Jumlah Pesanan',
-                    data: chartData.pesananMingguan,
+                    data: mingguanValues,
                     backgroundColor: 'rgba(0, 123, 255, 0.8)',
                     borderColor: '#007bff',
                     borderWidth: 2
@@ -217,6 +254,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         ticks: {
                             stepSize: 1
                         }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
                     }
                 }
             }
