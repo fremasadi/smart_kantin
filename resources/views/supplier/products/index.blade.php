@@ -17,7 +17,7 @@
             <th>Stok</th>
             {{-- <th>Status</th> --}}
             <th>Kategori</th>
-            <th>Aksi</th>
+            <!-- <th>Aksi</th> -->
         </tr>
     </thead>
     <tbody>
@@ -28,13 +28,13 @@
             <td>{{ $p->stok }}</td>
             {{-- <td>{{ ucfirst($p->status) }}</td> --}}
             <td>{{ $p->kategori }}</td>
-            <td>
+            <!-- <td>
                 <a href="{{ route('products.edit', $p) }}" class="btn btn-sm btn-warning">Edit</a>
                 <form action="{{ route('products.destroy', $p) }}" method="POST" style="display:inline-block">
                     @csrf @method('DELETE')
                     <button class="btn btn-sm btn-danger" onclick="return confirm('Hapus produk ini?')">Hapus</button>
                 </form>
-            </td>
+            </td> -->
         </tr>
     @endforeach
     </tbody>
