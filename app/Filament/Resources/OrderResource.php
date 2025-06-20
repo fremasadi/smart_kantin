@@ -43,12 +43,13 @@ class OrderResource extends Resource
                     Select::make('nama_pelanggan')
                         ->label('Nama Murid')
                         ->options(
-                            \App\Models\Murid::pluck('name', 'name') // key dan value = name
+                            \App\Models\Murid::all()->pluck(fn ($murid) => "{$murid->name} - Kelas {$murid->kelas}", 'name')
                         )
                         ->searchable()
                         ->required()
                         ->prefixIcon('heroicon-m-user')
                         ->columnSpanFull(),
+
 
                 ])
                 ->collapsed(false)
