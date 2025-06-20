@@ -19,11 +19,14 @@ class MuridResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationLabel = 'Daftar Murid';
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nama Murid')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('nisn')
                     ->required()
@@ -55,6 +58,7 @@ class MuridResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nama Murid')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('nisn')
                     ->searchable(),
