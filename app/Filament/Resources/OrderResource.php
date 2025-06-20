@@ -306,16 +306,6 @@ class OrderResource extends Resource
                     ->dateTime()
                     ->sortable(),
                 
-                // TextColumn::make('orderItems_count')
-                //     ->label('Jumlah Item')
-                //     ->counts('orderItems')
-                //     ->badge(),
-                
-                // TextColumn::make('created_at')
-                //     ->label('Dibuat')
-                //     ->dateTime()
-                //     ->sortable()
-                //     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
             
@@ -331,11 +321,21 @@ class OrderResource extends Resource
                     }),
             ])
             ->actions([
-                
+                Tables\Actions\Action::make('lihat_items')
+                    ->label('Lihat Item')
+                    ->icon('heroicon-o-eye')
+                    ->modalHeading('Detail Item Pesanan')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(function (\App\Models\Order $record) {
+                        $items = $record->orderItems()->with('product')->get();
+
+                        return view('filament.modals.lihat-order-items', compact('items'));
+                    }),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
