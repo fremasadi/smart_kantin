@@ -43,8 +43,11 @@ class OrderResource extends Resource
                     Select::make('nama_pelanggan')
                         ->label('Nama Murid')
                         ->options(
-                            \App\Models\Murid::all()->pluck(fn ($murid) => "{$murid->name} - Kelas {$murid->kelas}", 'name')
+                            \App\Models\Murid::all()->mapWithKeys(function ($murid) {
+                                return [$murid->name => "{$murid->name} - Kelas {$murid->kelas}"];
+                            })
                         )
+                        
                         ->searchable()
                         ->required()
                         ->prefixIcon('heroicon-m-user')
