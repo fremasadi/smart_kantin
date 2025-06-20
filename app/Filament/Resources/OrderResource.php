@@ -19,6 +19,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use App\Models\Murid;
 
 class OrderResource extends Resource
 {
@@ -35,16 +36,20 @@ class OrderResource extends Resource
     return $form
         ->schema([
             // Header Section - Customer Info
-            Forms\Components\Section::make('Informasi Pelanggan')
-                ->description('Masukkan data pelanggan')
+            Forms\Components\Section::make('Informasi Murid')
+                ->description('Masukkan data Murid')
                 ->icon('heroicon-m-user')
                 ->schema([
-                    TextInput::make('nama_pelanggan')
-                        ->label('Nama Pelanggan')
-                        ->placeholder('Masukkan nama pelanggan...')
+                    Select::make('nama_pelanggan')
+                        ->label('Nama Murid')
+                        ->options(
+                            \App\Models\Murid::pluck('name', 'name') // key dan value = name
+                        )
+                        ->searchable()
                         ->required()
                         ->prefixIcon('heroicon-m-user')
                         ->columnSpanFull(),
+
                 ])
                 ->collapsed(false)
                 ->collapsible(),

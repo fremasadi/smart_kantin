@@ -10,7 +10,6 @@ class Murid extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
         'name',
         'nisn',
         'tempat_lahir',
@@ -18,11 +17,7 @@ class Murid extends Model
         'jenis_kelamin',
         'alamat',
         'kelas',
-        'saldo',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    
 }
