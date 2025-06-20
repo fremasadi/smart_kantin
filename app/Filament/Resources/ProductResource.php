@@ -51,9 +51,15 @@ class ProductResource extends Resource
                             ->label('Deskripsi')
                             ->rows(3)
                             ->columnSpanFull(),
-                        
+                        Forms\Components\TextInput::make('harga_supplier')
+                            ->label('Harga Supplier')
+                            ->required()
+                            ->numeric()
+                            ->prefix('Rp')
+                            ->step(0.01)
+                            ->minValue(0),
                         Forms\Components\TextInput::make('harga')
-                            ->label('Harga')
+                            ->label('Harga Jual')
                             ->required()
                             ->numeric()
                             ->prefix('Rp')
@@ -130,9 +136,12 @@ class ProductResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->badge(),
-                
+                Tables\Columns\TextColumn::make('harga_supplier')
+                    ->label('Harga Suppplier')
+                    ->money('IDR')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('harga')
-                    ->label('Harga')
+                    ->label('Harga Jual')
                     ->money('IDR')
                     ->sortable(),
                 
