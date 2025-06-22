@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
 use App\Models\Murid;
+use App\Models\Product;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -31,6 +32,9 @@ class CreateOrder extends CreateRecord
         
         // Set total_harga berdasarkan perhitungan aktual
         $data['total_harga'] = $total;
+        
+        // **VALIDASI STOK PRODUK SEBELUM MEMBUAT ORDER**
+        $this->validateProductStock($orderItems);
         
         // Validasi untuk pembayaran saldo
         if (isset($data['metode_pembayaran']) && $data['metode_pembayaran'] === 'saldo') {
@@ -61,6 +65,84 @@ class CreateOrder extends CreateRecord
         unset($data['saldo_murid']);
         
         return $data;
+    }
+
+    /**
+     * Validasi stok produk sebelum membuat order
+     */
+    protected function validateProductStock(array $orderItems): void
+    {
+        if (empty($orderItems)) {
+            throw new \Exception('Tidak ada item dalam pesanan!');
+        }
+
+        $insufficientStock = [];
+        
+        foreach ($orderItems as $item) {
+            if (!isset($item['product_id']) || !isset($item['jumlah'])) {
+                continue;
+            }
+            
+            $product = Product::find($item['product_id']);
+            if (!$product) {
+                throw new \Exception('Produk tidak ditemukan!');
+            }
+            
+            $requestedQty = intval($item['jumlah']);
+            
+            if ($product->stok < $requestedQty) {
+                $insufficientStock[] = [
+                    'nama' => $product->nama_produk,
+                    'stok_tersedia' => $product->stok,
+                    'diminta' => $requestedQty
+                ];
+            }
+        }
+        
+        if (!empty($insufficientStock)) {
+            $errorMessage = "Stok tidak mencukupi untuk produk berikut:\n";
+            foreach ($insufficientStock as $item) {
+                $errorMessage .= "• {$item['nama']}: Diminta {$item['diminta']}, Tersedia {$item['stok_tersedia']}\n";
+            }
+            throw new \Exception($errorMessage);
+        }
+    }
+
+    /**
+     * Kurangi stok produk berdasarkan order items
+     */
+    protected function reduceProductStock(array $orderItems): array
+    {
+        $stockReductions = [];
+        
+        foreach ($orderItems as $item) {
+            if (!isset($item['product_id']) || !isset($item['jumlah'])) {
+                continue;
+            }
+            
+            $product = Product::find($item['product_id']);
+            if (!$product) {
+                continue;
+            }
+            
+            $requestedQty = intval($item['jumlah']);
+            $stockBefore = $product->stok;
+            
+            // Kurangi stok
+            $product->stok -= $requestedQty;
+            $product->save();
+            
+            // Log untuk tracking
+            $stockReductions[] = [
+                'product_id' => $product->id,
+                'nama_produk' => $product->nama_produk,
+                'stok_sebelum' => $stockBefore,
+                'dikurangi' => $requestedQty,
+                'stok_sesudah' => $product->stok
+            ];
+        }
+        
+        return $stockReductions;
     }
 
     protected function handleRecordCreation(array $data): Model
@@ -98,6 +180,9 @@ class CreateOrder extends CreateRecord
         // Buat order terlebih dahulu
         $order = static::getModel()::create($orderData);
         
+        // **KURANGI STOK PRODUK SEBELUM MEMBUAT ORDER ITEMS**
+        $stockReductions = $this->reduceProductStock($orderItems);
+        
         // Buat order items jika ada
         if (!empty($orderItems) && is_array($orderItems)) {
             foreach ($orderItems as $itemData) {
@@ -130,6 +215,14 @@ class CreateOrder extends CreateRecord
             }
         }
         
+        // **LOG PENGURANGAN STOK**
+        if (!empty($stockReductions)) {
+            \Log::info('Stok produk dikurangi', [
+                'order_id' => $order->id,
+                'reductions' => $stockReductions
+            ]);
+        }
+        
         // Refresh order untuk memastikan relasi ter-load
         $order->refresh();
         
@@ -148,17 +241,58 @@ class CreateOrder extends CreateRecord
             }
         }
         
-        // Tampilkan notifikasi sukses
+        // Tampilkan notifikasi sukses dengan info stok
+        $stockInfo = $this->getStockUpdateInfo();
+        
         Notification::make()
             ->title('Order berhasil dibuat!')
-            ->body("Order #{$this->record->id} telah berhasil disimpan{$muridInfo}")
+            ->body("Order #{$this->record->id} telah berhasil disimpan{$muridInfo}{$stockInfo}")
             ->success()
-            ->duration(5000)
+            ->duration(6000)
             ->send();
             
         // Buka halaman print di tab baru
         $printUrl = route('order.print', $this->record->id);
         $this->js("window.open('{$printUrl}', '_blank', 'width=400,height=650,scrollbars=yes,resizable=yes,menubar=no,toolbar=no')");
+    }
+    
+    /**
+     * Generate info tentang update stok untuk notifikasi
+     */
+    protected function getStockUpdateInfo(): string
+    {
+        $orderItems = $this->record->orderItems()->with('product')->get();
+        
+        if ($orderItems->isEmpty()) {
+            return '';
+        }
+        
+        $lowStockItems = [];
+        $outOfStockItems = [];
+        
+        foreach ($orderItems as $item) {
+            if ($item->product) {
+                $currentStock = $item->product->stok;
+                
+                if ($currentStock <= 0) {
+                    $outOfStockItems[] = $item->product->nama_produk;
+                } elseif ($currentStock <= 5) { // Threshold untuk stok rendah
+                    $lowStockItems[] = "{$item->product->nama_produk} ({$currentStock} tersisa)";
+                }
+            }
+        }
+        
+        $info = '';
+        
+        if (!empty($outOfStockItems)) {
+            $info .= " | ⚠️ Stok habis: " . implode(', ', $outOfStockItems);
+        }
+        
+        if (!empty($lowStockItems)) {
+            $info .= " | ⚠️ Stok rendah: " . implode(', ', $lowStockItems);
+        }
+        
+        return $info;
     }
     
     protected function getRedirectUrl(): string
