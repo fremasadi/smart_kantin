@@ -44,16 +44,37 @@ class OrderResource extends Resource
                         ->label('Nama Murid')
                         ->options(
                             \App\Models\Murid::all()->mapWithKeys(function ($murid) {
-                                return [$murid->name => "{$murid->name} - Kelas {$murid->kelas}"];
+                                return [$murid->name => "{$murid->name} - Kelas {$murid->kelas} (Saldo: Rp " . number_format($murid->saldo, 0, ',', '.') . ")"];
                             })
                         )
-                        
                         ->searchable()
                         ->required()
                         ->prefixIcon('heroicon-m-user')
-                        ->columnSpanFull(),
+                        ->columnSpanFull()
+                        ->live()
+                        ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            if ($state) {
+                                $murid = \App\Models\Murid::where('name', $state)->first();
+                                if ($murid) {
+                                    $set('saldo_murid', $murid->saldo);
+                                }
+                            } else {
+                                $set('saldo_murid', 0);
+                            }
+                        }),
 
+                    // Display current student balance
+                    Forms\Components\Placeholder::make('saldo_display')
+                        ->label('Saldo Murid Saat Ini')
+                        ->content(function (Get $get): string {
+                            $saldo = $get('saldo_murid') ?: 0;
+                            return 'Rp ' . number_format($saldo, 0, ',', '.');
+                        })
+                        ->extraAttributes(['class' => 'text-lg font-semibold text-blue-600'])
+                        ->visible(fn (Get $get) => !empty($get('nama_pelanggan'))),
 
+                    // Hidden field to store student balance
+                    Forms\Components\Hidden::make('saldo_murid'),
                 ])
                 ->collapsed(false)
                 ->collapsible(),
@@ -78,9 +99,18 @@ class OrderResource extends Resource
                             
                             $set('total_harga', $total);
                             
-                            // Update kembalian berdasarkan total yang baru
+                            // Update kembalian berdasarkan metode pembayaran
+                            $metodePembayaran = $get('metode_pembayaran');
                             $jumlahBayar = $get('jumlah_bayar') ?: 0;
-                            $kembalian = $jumlahBayar >= $total ? ($jumlahBayar - $total) : 0;
+                            
+                            if ($metodePembayaran === 'saldo') {
+                                $saldoMurid = $get('saldo_murid') ?: 0;
+                                $kembalian = $saldoMurid >= $total ? ($saldoMurid - $total) : 0;
+                                $set('jumlah_bayar', $total); // Set jumlah bayar sama dengan total untuk saldo
+                            } else {
+                                $kembalian = $jumlahBayar >= $total ? ($jumlahBayar - $total) : 0;
+                            }
+                            
                             $set('kembalian_display', $kembalian);
                             $set('kembalian', $kembalian);
                         })
@@ -163,9 +193,18 @@ class OrderResource extends Resource
                         
                         $set('total_harga', $total);
                         
-                        // Update kembalian berdasarkan total yang baru
+                        // Update kembalian berdasarkan metode pembayaran
+                        $metodePembayaran = $get('metode_pembayaran');
                         $jumlahBayar = $get('jumlah_bayar') ?: 0;
-                        $kembalian = $jumlahBayar >= $total ? ($jumlahBayar - $total) : 0;
+                        
+                        if ($metodePembayaran === 'saldo') {
+                            $saldoMurid = $get('saldo_murid') ?: 0;
+                            $kembalian = $saldoMurid >= $total ? ($saldoMurid - $total) : 0;
+                            $set('jumlah_bayar', $total); // Set jumlah bayar sama dengan total untuk saldo
+                        } else {
+                            $kembalian = $jumlahBayar >= $total ? ($jumlahBayar - $total) : 0;
+                        }
+                        
                         $set('kembalian_display', $kembalian);
                         $set('kembalian', $kembalian);
                     })
@@ -217,13 +256,41 @@ class OrderResource extends Resource
                                 ->label('Metode Pembayaran')
                                 ->options([
                                     'tunai' => '💵 Tunai',
+                                    'saldo' => '💳 Saldo Murid',
                                     // 'transfer' => '🏧 Transfer Bank',
                                     // 'qris' => '📱 QRIS'
                                 ])
                                 ->default('tunai')
                                 ->required()
                                 ->prefixIcon('heroicon-m-credit-card')
-                                ->columnSpan(1),
+                                ->columnSpan(1)
+                                ->live()
+                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                    // Calculate total from orderItems
+                                    $items = $get('orderItems') ?: [];
+                                    $total = 0;
+                                    
+                                    foreach ($items as $item) {
+                                        $total += $item['subtotal'] ?? 0;
+                                    }
+                                    
+                                    if ($state === 'saldo') {
+                                        // For saldo payment, auto-set jumlah_bayar to total and calculate based on saldo
+                                        $set('jumlah_bayar', $total);
+                                        $saldoMurid = $get('saldo_murid') ?: 0;
+                                        $kembalian = $saldoMurid >= $total ? ($saldoMurid - $total) : 0;
+                                        $set('kembalian_display', $kembalian);
+                                        $set('kembalian', $kembalian);
+                                    } else {
+                                        // For cash payment, reset kembalian
+                                        $jumlahBayar = $get('jumlah_bayar') ?: 0;
+                                        $kembalian = $jumlahBayar >= $total ? ($jumlahBayar - $total) : 0;
+                                        $set('kembalian_display', $kembalian);
+                                        $set('kembalian', $kembalian);
+                                    }
+                                    
+                                    $set('total_harga', $total);
+                                }),
                             
                             TextInput::make('jumlah_bayar')
                                 ->label('Jumlah Bayar')
@@ -232,6 +299,7 @@ class OrderResource extends Resource
                                 ->live()
                                 ->prefixIcon('heroicon-m-banknotes')
                                 ->columnSpan(1)
+                                ->disabled(fn (Get $get) => $get('metode_pembayaran') === 'saldo')
                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                     // Hitung total dari orderItems
                                     $items = $get('orderItems') ?: [];
@@ -241,9 +309,17 @@ class OrderResource extends Resource
                                         $total += $item['subtotal'] ?? 0;
                                     }
                                     
-                                    // Hitung kembalian
-                                    $jumlahBayar = $state ?: 0;
-                                    $kembalian = $jumlahBayar >= $total ? ($jumlahBayar - $total) : 0;
+                                    $metodePembayaran = $get('metode_pembayaran');
+                                    
+                                    if ($metodePembayaran === 'saldo') {
+                                        // For saldo payment, calculate based on student balance
+                                        $saldoMurid = $get('saldo_murid') ?: 0;
+                                        $kembalian = $saldoMurid >= $total ? ($saldoMurid - $total) : 0;
+                                    } else {
+                                        // For cash payment, calculate normally
+                                        $jumlahBayar = $state ?: 0;
+                                        $kembalian = $jumlahBayar >= $total ? ($jumlahBayar - $total) : 0;
+                                    }
                                     
                                     // Set kembalian ke field yang visible
                                     $set('kembalian_display', $kembalian);
@@ -255,15 +331,38 @@ class OrderResource extends Resource
                             
                             // Gunakan TextInput readonly untuk kembalian agar bisa update real-time
                             TextInput::make('kembalian_display')
-                                ->label('KEMBALIAN')
+                                ->label(fn (Get $get) => $get('metode_pembayaran') === 'saldo' ? 'SISA SALDO' : 'KEMBALIAN')
                                 ->numeric()
                                 ->prefix('Rp')
                                 ->readOnly()
-                                ->prefixIcon('heroicon-m-gift')
-                                ->extraAttributes(['class' => 'text-lg font-semibold text-green-600'])
+                                ->prefixIcon(fn (Get $get) => $get('metode_pembayaran') === 'saldo' ? 'heroicon-m-wallet' : 'heroicon-m-gift')
+                                ->extraAttributes(fn (Get $get) => [
+                                    'class' => $get('metode_pembayaran') === 'saldo' ? 
+                                        'text-lg font-semibold text-blue-600' : 
+                                        'text-lg font-semibold text-green-600'
+                                ])
                                 ->columnSpan(1)
                                 ->formatStateUsing(fn ($state) => number_format($state ?: 0, 0, ',', '.')),
                         ]),
+                    
+                    // Warning if saldo insufficient
+                    Forms\Components\Placeholder::make('saldo_warning')
+                        ->label('')
+                        ->content('⚠️ Saldo tidak mencukupi untuk pesanan ini!')
+                        ->extraAttributes(['class' => 'text-red-600 font-semibold'])
+                        ->visible(function (Get $get): bool {
+                            if ($get('metode_pembayaran') !== 'saldo') return false;
+                            
+                            $items = $get('orderItems') ?: [];
+                            $total = 0;
+                            
+                            foreach ($items as $item) {
+                                $total += $item['subtotal'] ?? 0;
+                            }
+                            
+                            $saldoMurid = $get('saldo_murid') ?: 0;
+                            return $total > $saldoMurid;
+                        }),
                     
                     // Hidden field untuk kembalian (akan diisi saat save)
                     Forms\Components\Hidden::make('kembalian'),
@@ -297,6 +396,7 @@ class OrderResource extends Resource
                     ->label('Metode Pembayaran')
                     ->colors([
                         'success' => 'tunai',
+                        'primary' => 'saldo',
                         'info' => 'transfer',
                         'warning' => 'qris',
                     ]),
@@ -319,6 +419,15 @@ class OrderResource extends Resource
                             ->when($data['dari_tanggal'], fn ($query, $date) => $query->whereDate('tanggal_pesanan', '>=', $date))
                             ->when($data['sampai_tanggal'], fn ($query, $date) => $query->whereDate('tanggal_pesanan', '<=', $date));
                     }),
+                
+                Tables\Filters\SelectFilter::make('metode_pembayaran')
+                    ->label('Metode Pembayaran')
+                    ->options([
+                        'tunai' => 'Tunai',
+                        'saldo' => 'Saldo Murid',
+                        'transfer' => 'Transfer',
+                        'qris' => 'QRIS',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\Action::make('lihat_items')
