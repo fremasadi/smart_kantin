@@ -33,19 +33,30 @@ class CreateOrder extends CreateRecord
         // Set total_harga berdasarkan perhitungan aktual
         $data['total_harga'] = $total;
         
-        // **VALIDASI STOK PRODUK SEBELUM MEMBUAT ORDER**
-        $this->validateProductStock($orderItems);
-        
         // Validasi untuk pembayaran saldo
         if (isset($data['metode_pembayaran']) && $data['metode_pembayaran'] === 'saldo') {
             $murid = Murid::where('name', $data['nama_pelanggan'])->first();
             
             if (!$murid) {
-                throw new \Exception('Murid tidak ditemukan!');
+                // Kirim notifikasi error dan halt
+                Notification::make()
+                    ->title('Error!')
+                    ->body('Murid tidak ditemukan!')
+                    ->danger()
+                    ->duration(5000)
+                    ->send();
+                $this->halt();
             }
             
             if ($murid->saldo < $total) {
-                throw new \Exception('Saldo murid tidak mencukupi! Saldo saat ini: Rp ' . number_format($murid->saldo, 0, ',', '.') . ', Total pesanan: Rp ' . number_format($total, 0, ',', '.'));
+                // Kirim notifikasi error dan halt
+                Notification::make()
+                    ->title('Saldo Tidak Mencukupi!')
+                    ->body('Saldo saat ini: Rp ' . number_format($murid->saldo, 0, ',', '.') . ', Total pesanan: Rp ' . number_format($total, 0, ',', '.'))
+                    ->danger()
+                    ->duration(5000)
+                    ->send();
+                $this->halt();
             }
             
             // Set jumlah_bayar sama dengan total untuk pembayaran saldo
@@ -70,10 +81,16 @@ class CreateOrder extends CreateRecord
     /**
      * Validasi stok produk sebelum membuat order
      */
-    protected function validateProductStock(array $orderItems): void
+    protected function validateProductStock(array $orderItems): bool
     {
         if (empty($orderItems)) {
-            throw new \Exception('Tidak ada item dalam pesanan!');
+            Notification::make()
+                ->title('Error!')
+                ->body('Tidak ada item dalam pesanan!')
+                ->danger()
+                ->duration(5000)
+                ->send();
+            $this->halt();
         }
 
         $insufficientStock = [];
@@ -85,7 +102,13 @@ class CreateOrder extends CreateRecord
             
             $product = Product::find($item['product_id']);
             if (!$product) {
-                throw new \Exception('Produk tidak ditemukan!');
+                Notification::make()
+                    ->title('Error!')
+                    ->body('Produk tidak ditemukan!')
+                    ->danger()
+                    ->duration(5000)
+                    ->send();
+                $this->halt();
             }
             
             $requestedQty = intval($item['jumlah']);
@@ -104,8 +127,17 @@ class CreateOrder extends CreateRecord
             foreach ($insufficientStock as $item) {
                 $errorMessage .= "• {$item['nama']}: Diminta {$item['diminta']}, Tersedia {$item['stok_tersedia']}\n";
             }
-            throw new \Exception($errorMessage);
+            
+            Notification::make()
+                ->title('Stok Tidak Mencukupi!')
+                ->body($errorMessage)
+                ->danger()
+                ->duration(8000)
+                ->send();
+            $this->halt();
         }
+        
+        return true;
     }
 
     /**
@@ -150,6 +182,9 @@ class CreateOrder extends CreateRecord
         // Ambil form state untuk mendapatkan orderItems
         $formState = $this->form->getState();
         $orderItems = $formState['orderItems'] ?? [];
+        
+        // **VALIDASI STOK PRODUK SEBELUM MEMBUAT ORDER**
+        $this->validateProductStock($orderItems);
         
         // Double check total calculation
         if (empty($data['total_harga']) || $data['total_harga'] == 0) {
