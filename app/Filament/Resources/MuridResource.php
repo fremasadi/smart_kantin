@@ -50,6 +50,12 @@ class MuridResource extends Resource
                 Forms\Components\TextInput::make('kelas')
                     ->required()
                     ->maxLength(255),
+                    Forms\Components\TextInput::make('saldo')
+                    ->label('Saldo')
+                    ->numeric()
+                    ->prefix('Rp')
+                    ->default(0)
+                    ->required(),
             ]);
     }
 
@@ -70,6 +76,11 @@ class MuridResource extends Resource
                 Tables\Columns\TextColumn::make('jenis_kelamin'),
                 Tables\Columns\TextColumn::make('kelas')
                     ->searchable(),
+                // ✅ Tambahan kolom saldo
+                Tables\Columns\TextColumn::make('saldo')
+                    ->label('Saldo')
+                    ->money('IDR')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
