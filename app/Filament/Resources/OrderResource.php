@@ -20,6 +20,7 @@ use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use App\Models\Murid;
+use Filament\Notifications\Notification;
 
 class OrderResource extends Resource
 {
@@ -124,7 +125,10 @@ class OrderResource extends Resource
                                             return Product::aktif()
                                                 ->get()
                                                 ->mapWithKeys(function ($product) {
-                                                    return [$product->id => $product->nama_produk . ' - Rp ' . number_format($product->harga, 0, ',', '.')];
+                                                    $stokInfo = $product->stok > 0 ? 
+                                                        " (Stok: {$product->stok})" : 
+                                                        " (HABIS)";
+                                                    return [$product->id => $product->nama_produk . ' - Rp ' . number_format($product->harga, 0, ',', '.') . $stokInfo];
                                                 });
                                         })
                                         ->required()
@@ -137,11 +141,33 @@ class OrderResource extends Resource
                                                 $product = Product::find($state);
                                                 if ($product) {
                                                     $set('harga_satuan', $product->harga);
+                                                    $set('stok_tersedia', $product->stok);
                                                     $jumlah = $get('jumlah') ?: 1;
-                                                    $set('subtotal', $product->harga * $jumlah);
+                                                    
+                                                    // Validasi stok saat produk dipilih
+                                                    if ($product->stok <= 0) {
+                                                        $set('jumlah', 0);
+                                                        $set('subtotal', 0);
+                                                        Notification::make()
+                                                            ->title('Stok Habis!')
+                                                            ->body("Produk {$product->nama_produk} sedang habis stok.")
+                                                            ->danger()
+                                                            ->send();
+                                                    } elseif ($jumlah > $product->stok) {
+                                                        $set('jumlah', $product->stok);
+                                                        $set('subtotal', $product->harga * $product->stok);
+                                                        Notification::make()
+                                                            ->title('Stok Terbatas!')
+                                                            ->body("Jumlah pesanan disesuaikan dengan stok tersedia: {$product->stok}")
+                                                            ->warning()
+                                                            ->send();
+                                                    } else {
+                                                        $set('subtotal', $product->harga * $jumlah);
+                                                    }
                                                 }
                                             } else {
                                                 $set('harga_satuan', 0);
+                                                $set('stok_tersedia', 0);
                                                 $set('subtotal', 0);
                                             }
                                         }),
@@ -159,7 +185,42 @@ class OrderResource extends Resource
                                         ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                             $harga = $get('harga_satuan') ?: 0;
                                             $jumlah = $state ?: 1;
-                                            $set('subtotal', $harga * $jumlah);
+                                            $stokTersedia = $get('stok_tersedia') ?: 0;
+                                            $productId = $get('product_id');
+                                            
+                                            // Validasi stok
+                                            if ($productId && $stokTersedia <= 0) {
+                                                $set('jumlah', 0);
+                                                $set('subtotal', 0);
+                                                Notification::make()
+                                                    ->title('Stok Habis!')
+                                                    ->body('Produk ini sedang habis stok.')
+                                                    ->danger()
+                                                    ->send();
+                                                return;
+                                            }
+                                            
+                                            if ($productId && $jumlah > $stokTersedia) {
+                                                $set('jumlah', $stokTersedia);
+                                                $set('subtotal', $harga * $stokTersedia);
+                                                Notification::make()
+                                                    ->title('Stok Terbatas!')
+                                                    ->body("Stok tersedia hanya: {$stokTersedia}. Jumlah disesuaikan.")
+                                                    ->warning()
+                                                    ->send();
+                                            } else {
+                                                $set('subtotal', $harga * $jumlah);
+                                            }
+                                        })
+                                        ->hint(function (Get $get): ?string {
+                                            $stok = $get('stok_tersedia');
+                                            return $stok > 0 ? "Stok tersedia: {$stok}" : null;
+                                        })
+                                        ->hintColor(function (Get $get): string {
+                                            $stok = $get('stok_tersedia') ?: 0;
+                                            if ($stok <= 0) return 'danger';
+                                            if ($stok <= 5) return 'warning';
+                                            return 'success';
                                         }),
                                     
                                     TextInput::make('subtotal')
@@ -172,8 +233,40 @@ class OrderResource extends Resource
                                         ->formatStateUsing(fn ($state) => number_format($state ?: 0, 0, ',', '.')),
                                 ]),
                             
-                            // Hidden field untuk menyimpan harga satuan
+                            // Hidden fields
                             Forms\Components\Hidden::make('harga_satuan'),
+                            Forms\Components\Hidden::make('stok_tersedia'),
+                            
+                            // Warning untuk stok rendah
+                            Forms\Components\Placeholder::make('stock_warning')
+                                ->label('')
+                                ->content(function (Get $get): string {
+                                    $stok = $get('stok_tersedia') ?: 0;
+                                    $productId = $get('product_id');
+                                    
+                                    if (!$productId) return '';
+                                    
+                                    if ($stok <= 0) {
+                                        return '🚫 Produk ini habis stok!';
+                                    } elseif ($stok <= 5) {
+                                        return "⚠️ Stok tinggal {$stok} item!";
+                                    }
+                                    return '';
+                                })
+                                ->extraAttributes(function (Get $get): array {
+                                    $stok = $get('stok_tersedia') ?: 0;
+                                    if ($stok <= 0) {
+                                        return ['class' => 'text-red-600 font-semibold'];
+                                    } elseif ($stok <= 5) {
+                                        return ['class' => 'text-orange-600 font-semibold'];
+                                    }
+                                    return [];
+                                })
+                                ->visible(function (Get $get): bool {
+                                    $stok = $get('stok_tersedia') ?: 0;
+                                    $productId = $get('product_id');
+                                    return $productId && $stok <= 5;
+                                }),
                             
                             Textarea::make('catatan_item')
                                 ->label('Catatan Item')
@@ -219,9 +312,13 @@ class OrderResource extends Resource
                         $qty = $state['jumlah'] ?? 1;
                         $subtotal = $state['subtotal'] ?? 0;
                         
-                        return $product ? 
-                            $product->nama_produk . " ({$qty}x) - Rp " . number_format($subtotal, 0, ',', '.') : 
-                            'Item Baru';
+                        if ($product) {
+                            $stokInfo = $product->stok <= 5 && $product->stok > 0 ? ' ⚠️' : '';
+                            $stokInfo .= $product->stok <= 0 ? ' 🚫' : '';
+                            return $product->nama_produk . " ({$qty}x) - Rp " . number_format($subtotal, 0, ',', '.') . $stokInfo;
+                        }
+                        
+                        return 'Item Baru';
                     })
                     ->defaultItems(1)
                 ])
@@ -425,8 +522,8 @@ class OrderResource extends Resource
                     ->options([
                         'tunai' => 'Tunai',
                         'saldo' => 'Saldo Murid',
-                        'transfer' => 'Transfer',
-                        'qris' => 'QRIS',
+                        // 'transfer' => 'Transfer',
+                        // 'qris' => 'QRIS',
                     ]),
             ])
             ->actions([
