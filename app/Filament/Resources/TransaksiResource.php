@@ -31,9 +31,11 @@ class TransaksiResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('order_item_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('order.nomor_pesanan')
+                    ->label('Nomor Pesanan')
+                    ->searchable()
                     ->sortable(),
+
                 Tables\Columns\TextColumn::make('harga_supplier')
                     ->numeric()
                     ->sortable(),
@@ -82,8 +84,7 @@ class TransaksiResource extends Resource
     {
         return [
             'index' => Pages\ListTransaksis::route('/'),
-            'create' => Pages\CreateTransaksi::route('/create'),
-            'edit' => Pages\EditTransaksi::route('/{record}/edit'),
+           
         ];
     }
 }
