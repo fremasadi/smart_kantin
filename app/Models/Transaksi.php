@@ -26,8 +26,16 @@ class Transaksi extends Model
         'jumlah' => 'integer',
     ];
 
-    public function orderItem()
-    {
-        return $this->belongsTo(OrderItem::class);
-    }
+    // Di Transaksi.php
+public function orderItem()
+{
+    return $this->belongsTo(OrderItem::class);
+}
+
+// Di OrderItem.php
+public function order()
+{
+    return $this->belongsTo(Order::class);
+}
+
 }
