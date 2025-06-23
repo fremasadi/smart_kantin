@@ -28,8 +28,8 @@
                     <th>Nama Pelanggan</th>
                     <th>Produk</th>
                     <th>Jumlah</th>
-                    <th>Harga Satuan</th>
-                    <th>Subtotal</th>
+                    <th>Harga Supplier</th>
+                    {{-- <th>Subtotal</th> --}}
                     <th>Tanggal</th>
                 </tr>
             </thead>
@@ -40,8 +40,8 @@
                         <td>{{ $item->order->nama_pelanggan }}</td>
                         <td>{{ $item->product->nama_produk }}</td>
                         <td>{{ $item->jumlah }}</td>
-                        <td>Rp{{ number_format($item->harga_satuan, 0, ',', '.') }}</td>
-                        <td>Rp{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                        <td>Rp{{ number_format($item->product->harga_supplier, 0, ',', '.') }}</td>
+                        {{-- <td>Rp{{ number_format($item->subtotal, 0, ',', '.') }}</td> --}}
                         <td>{{ $item->order->tanggal_pesanan->format('d-m-Y H:i') }}</td>
                     </tr>
                 @empty
