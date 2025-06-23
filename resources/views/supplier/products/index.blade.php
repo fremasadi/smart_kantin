@@ -14,7 +14,7 @@
         <tr>
             <th>Nama</th>
             <th>Harga Supplier</th>
-            <th>Harga Jual</th>
+            {{-- <th>Harga Jual</th> --}}
             <th>Stok</th>
             {{-- <th>Status</th> --}}
             <th>Kategori</th>
@@ -26,7 +26,7 @@
         <tr>
             <td>{{ $p->nama_produk }}</td>
             <td>Rp{{ number_format($p->harga_supplier, 0, ',', '.') }}</td>
-            <td>Rp{{ number_format($p->harga, 0, ',', '.') }}</td>
+            {{-- <td>Rp{{ number_format($p->harga, 0, ',', '.') }}</td> --}}
             <td>{{ $p->stok }}</td>
             {{-- <td>{{ ucfirst($p->status) }}</td> --}}
             <td>{{ $p->kategori }}</td>
