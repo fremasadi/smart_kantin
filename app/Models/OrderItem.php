@@ -38,34 +38,6 @@ class OrderItem extends Model
 {
     return $this->hasOne(Transaksi::class);
 }
-protected static function booted()
-{
-    static::created(function ($item) {
-        $item->loadMissing('product'); // pastikan relasi terload
-
-        $product = $item->product;
-
-        if (!$product) {
-            // Tidak ada relasi product, hentikan proses
-            return;
-        }
-
-        $hargaSupplier = $product->harga_supplier;
-        $hargaJual = $item->harga_satuan;
-        $jumlah = $item->jumlah;
-        $labaPerItem = $hargaJual - $hargaSupplier;
-        $totalLaba = $labaPerItem * $jumlah;
-
-        \App\Models\Transaksi::create([
-            'order_item_id' => $item->id,
-            'harga_supplier' => $hargaSupplier,
-            'harga_jual' => $hargaJual,
-            'jumlah' => $jumlah,
-            'laba_per_item' => $labaPerItem,
-            'total_laba' => $totalLaba,
-        ]);
-    }, afterCommit: true);
-}
 
 
 
