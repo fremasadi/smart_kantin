@@ -35,7 +35,7 @@ class SupplierOrderExport implements FromCollection, WithHeadings
             'Nama Pelanggan',
             'Produk',
             'Jumlah',
-            'Harga Satuan',
+            'Harga Supplier',
             'Tanggal Pesanan',
         ];
     }
