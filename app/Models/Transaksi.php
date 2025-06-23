@@ -2,34 +2,32 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Transaksi extends Model
 {
-    protected $table = 'transaksi';
+    use HasFactory;
 
     protected $fillable = [
-        'murid_id',
-        'orangtua_id',
-        'nominal',
-        'bukti_transfer',
-        'status',
-
+        'order_item_id',
+        'harga_supplier',
+        'harga_jual',
+        'jumlah',
+        'laba_per_item',
+        'total_laba',
     ];
 
-   // Transaksi.php
-public function murid()
-{
-    return $this->belongsTo(Murid::class);
-}
+    protected $casts = [
+        'harga_supplier' => 'decimal:2',
+        'harga_jual' => 'decimal:2',
+        'laba_per_item' => 'decimal:2',
+        'total_laba' => 'decimal:2',
+        'jumlah' => 'integer',
+    ];
 
-public function orangtua()
-{
-    return $this->belongsTo(User::class, 'orangtua_id');
-}
-
-
-    
-
-    
+    public function orderItem()
+    {
+        return $this->belongsTo(OrderItem::class);
+    }
 }
