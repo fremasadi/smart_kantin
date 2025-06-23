@@ -31,10 +31,11 @@ class TransaksiResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('order.nomor_pesanan')
+                Tables\Columns\TextColumn::make('orderItem.order.nomor_pesanan')
                     ->label('Nomor Pesanan')
                     ->searchable()
                     ->sortable(),
+
 
                 Tables\Columns\TextColumn::make('harga_supplier')
                     ->numeric()
