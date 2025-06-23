@@ -22,8 +22,7 @@ class SupplierOrderExport implements FromCollection, WithHeadings
                     'Nama Pelanggan'    => $item->order->nama_pelanggan,
                     'Produk'            => $item->product->nama_produk,
                     'Jumlah'            => $item->jumlah,
-                    'Harga Satuan'      => $item->harga_satuan,
-                    'Subtotal'          => $item->subtotal,
+                    'Harga Supplier'      =>$item->product->harga_supplier,
                     'Tanggal Pesanan'   => $item->order->tanggal_pesanan->format('Y-m-d H:i'),
                 ];
             });
@@ -37,7 +36,6 @@ class SupplierOrderExport implements FromCollection, WithHeadings
             'Produk',
             'Jumlah',
             'Harga Satuan',
-            'Subtotal',
             'Tanggal Pesanan',
         ];
     }
