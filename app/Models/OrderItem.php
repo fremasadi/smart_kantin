@@ -41,7 +41,14 @@ class OrderItem extends Model
 protected static function booted()
 {
     static::created(function ($item) {
+        $item->loadMissing('product'); // pastikan relasi terload
+
         $product = $item->product;
+
+        if (!$product) {
+            // Tidak ada relasi product, hentikan proses
+            return;
+        }
 
         $hargaSupplier = $product->harga_supplier;
         $hargaJual = $item->harga_satuan;
@@ -57,7 +64,7 @@ protected static function booted()
             'laba_per_item' => $labaPerItem,
             'total_laba' => $totalLaba,
         ]);
-    });
+    }, afterCommit: true);
 }
 
 
