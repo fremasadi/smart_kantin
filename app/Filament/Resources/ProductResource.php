@@ -199,7 +199,9 @@ class ProductResource extends Resource
                     ->requiresConfirmation()
                     ->color('danger')
                     ->icon('heroicon-o-archive-box')
-                    ->visible(fn (Product $record) => $record->stok > 0),
+                    ->visible(fn (Product $record) =>
+                        $record->stok > 0 && $record->kategori !== 'Snack Kering'
+                    ),
 
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
