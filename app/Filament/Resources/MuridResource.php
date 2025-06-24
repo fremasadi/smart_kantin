@@ -21,6 +21,9 @@ class MuridResource extends Resource
 
     protected static ?string $navigationLabel = 'Daftar Murid';
 
+    protected static ?string $navigationGroup = 'Manajemen Pengguna';
+
+
     public static function form(Form $form): Form
     {
         return $form
