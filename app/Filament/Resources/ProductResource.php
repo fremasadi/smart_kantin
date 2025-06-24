@@ -80,14 +80,14 @@ class ProductResource extends Resource
                             ->searchable()
                             ->required(),
                         
-                        Forms\Components\Select::make('status')
-                            ->label('Status')
-                            ->options([
-                                'aktif' => 'Aktif',
-                                'nonaktif' => 'Non-Aktif'
-                            ])
-                            ->default('aktif')
-                            ->required(),
+                        // Forms\Components\Select::make('status')
+                        //     ->label('Status')
+                        //     ->options([
+                        //         'aktif' => 'Aktif',
+                        //         'nonaktif' => 'Non-Aktif'
+                        //     ])
+                        //     ->default('aktif')
+                        //     ->required(),
                     ])
                     ->columns(2),
                 
@@ -194,6 +194,13 @@ class ProductResource extends Resource
             ])
             ->actions([
                 // Tables\Actions\ViewAction::make(),
+                Tables\Actions\Action::make('Kembalikan ke Supplier')
+                    ->action(fn (Product $record) => $record->returnToSupplier())
+                    ->requiresConfirmation()
+                    ->color('danger')
+                    ->icon('heroicon-o-archive-box')
+                    ->visible(fn (Product $record) => $record->stok > 0),
+
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

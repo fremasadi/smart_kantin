@@ -42,4 +42,11 @@ class Product extends Model
 {
     return $this->belongsTo(User::class, 'supplier_id');
 }
+public function returnToSupplier(): void
+{
+    $this->stok = 0;
+    $this->returned_at = now();
+    $this->save();
+}
+
 }
