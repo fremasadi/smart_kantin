@@ -13,6 +13,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Filters\SelectFilter;
 use App\Models\User;
+use App\Models\Kategori;
 
 class ProductResource extends Resource
 {
@@ -73,14 +74,11 @@ class ProductResource extends Resource
                             ->default(0)
                             ->minValue(0),
                         
-                        Forms\Components\TextInput::make('kategori')
+                        Forms\Components\Select::make('kategori')
                             ->label('Kategori')
-                            ->datalist([
-                                'Makanan',
-                                'Minuman',
-                                'Snack',
-                                'Lainnya'
-                            ]),
+                            ->options(fn () => Kategori::pluck('name', 'name')) // key & value = name
+                            ->searchable()
+                            ->required(),
                         
                         Forms\Components\Select::make('status')
                             ->label('Status')
