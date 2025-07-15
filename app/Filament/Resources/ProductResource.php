@@ -20,11 +20,11 @@ class ProductResource extends Resource
     protected static ?string $model = Product::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-cube';
-    
+
     protected static ?string $navigationLabel = 'Produk';
-    
+
     protected static ?string $modelLabel = 'Produk';
-    
+
     protected static ?string $pluralModelLabel = 'Produk';
 
     protected static ?string $navigationGroup = 'Manajemen Produk';
@@ -39,28 +39,11 @@ class ProductResource extends Resource
                             ->label('Nama Produk')
                             ->required()
                             ->maxLength(255),
-                            Forms\Components\Select::make('supplier_id')
-                            ->label('Nama Supplier')
-                            ->options(
-                                User::where('role', 'supplier') // filter berdasarkan role
-                                    ->pluck('name', 'id')       // format: [id => name]
-                                    ->toArray()
-                            )
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                        
+
                         Forms\Components\Textarea::make('deskripsi')
                             ->label('Deskripsi')
                             ->rows(3)
                             ->columnSpanFull(),
-                        Forms\Components\TextInput::make('harga_supplier')
-                            ->label('Harga Supplier')
-                            ->required()
-                            ->numeric()
-                            ->prefix('Rp')
-                            ->step(0.01)
-                            ->minValue(0),
                         Forms\Components\TextInput::make('harga')
                             ->label('Harga Jual')
                             ->required()
@@ -68,20 +51,20 @@ class ProductResource extends Resource
                             ->prefix('Rp')
                             ->step(0.01)
                             ->minValue(0),
-                        
+
                         Forms\Components\TextInput::make('stok')
                             ->label('Stok')
                             ->required()
                             ->numeric()
                             ->default(0)
                             ->minValue(0),
-                        
+
                         Forms\Components\Select::make('kategori')
                             ->label('Kategori')
                             ->options(fn () => Kategori::pluck('name', 'name')) // key & value = name
                             ->searchable()
                             ->required(),
-                        
+
                         // Forms\Components\Select::make('status')
                         //     ->label('Status')
                         //     ->options([
@@ -92,7 +75,7 @@ class ProductResource extends Resource
                         //     ->required(),
                     ])
                     ->columns(2),
-                
+
                 Forms\Components\Section::make('Gambar Produk')
                     ->schema([
                         FileUpload::make('gambar')
@@ -108,7 +91,7 @@ class ProductResource extends Resource
                             ->visibility('public')
                             ->columnSpanFull(),
                             ]),
-                    
+
             ]);
     }
 
@@ -120,31 +103,24 @@ class ProductResource extends Resource
                     ->label('Gambar')
                     ->size(60)
                     ->circular(),
-                
+
                 Tables\Columns\TextColumn::make('nama_produk')
                     ->label('Nama Produk')
                     ->searchable()
                     ->sortable(),
-                    Tables\Columns\TextColumn::make('supplier.name')
-                    ->label('Nama Supplier')
-                    ->searchable()
-                    ->sortable(),
-                
-                
+
+
                 Tables\Columns\TextColumn::make('kategori')
                     ->label('Kategori')
                     ->searchable()
                     ->sortable()
                     ->badge(),
-                Tables\Columns\TextColumn::make('harga_supplier')
-                    ->label('Harga Suppplier')
-                    ->money('IDR')
-                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('harga')
                     ->label('Harga Jual')
                     ->money('IDR')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('stok')
                     ->label('Stok')
                     ->numeric()
@@ -154,7 +130,7 @@ class ProductResource extends Resource
                         $state <= 10 => 'warning',
                         default => 'success',
                     }),
-                
+
                 // Tables\Columns\TextColumn::make('status')
                 //     ->label('Status')
                 //     ->badge()
@@ -162,13 +138,13 @@ class ProductResource extends Resource
                 //         'aktif' => 'success',
                 //         'nonaktif' => 'danger',
                 //     }),
-                
+
                 // Tables\Columns\TextColumn::make('created_at')
                 //     ->label('Dibuat')
                 //     ->dateTime()
                 //     ->sortable()
                 //     ->toggleable(isToggledHiddenByDefault: true),
-                
+
                 // Tables\Columns\TextColumn::make('updated_at')
                 //     ->label('Diperbarui')
                 //     ->dateTime()
@@ -182,28 +158,21 @@ class ProductResource extends Resource
                         'aktif' => 'Aktif',
                         'nonaktif' => 'Non-Aktif',
                     ]),
-                
+
                 SelectFilter::make('kategori')
                     ->label('Kategori'),
-                
+
                 Tables\Filters\Filter::make('stok_habis')
                     ->label('Stok Habis')
                     ->query(fn ($query) => $query->where('stok', '=', 0)),
-                
+
                 Tables\Filters\Filter::make('stok_menipis')
                     ->label('Stok Menipis')
                     ->query(fn ($query) => $query->where('stok', '<=', 10)->where('stok', '>', 0)),
             ])
             ->actions([
                 // Tables\Actions\ViewAction::make(),
-                Tables\Actions\Action::make('Kembalikan ke Supplier')
-                    ->action(fn (Product $record) => $record->returnToSupplier())
-                    ->requiresConfirmation()
-                    ->color('danger')
-                    ->icon('heroicon-o-archive-box')
-                    ->visible(fn (Product $record) =>
-                        $record->stok > 0 && $record->kategori !== 'Snack Kering'
-                    ),
+
 
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
@@ -216,7 +185,7 @@ class ProductResource extends Resource
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->action(fn ($records) => $records->each->update(['status' => 'aktif'])),
-                    
+
                     Tables\Actions\BulkAction::make('nonaktifkan')
                         ->label('Non-Aktifkan')
                         ->icon('heroicon-o-x-circle')
