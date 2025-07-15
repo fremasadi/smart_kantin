@@ -20,7 +20,7 @@ class SupplierAuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials)) {
-            if (auth()->user()->role === 'supplier') {
+            if (auth()->user()->role === 'kasir') {
                 return redirect()->route('supplier.dashboard');
             } else {
                 Auth::logout();
