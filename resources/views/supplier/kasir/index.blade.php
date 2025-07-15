@@ -487,7 +487,7 @@ function resetForm() {
 // Load produk populer
 function loadProdukPopuler() {
     $.ajax({
-        url: '{{ route("supplier.kasir.produk-populer") }}',
+        url: '{{ route("kasir.produk-populer") }}',
         method: 'GET',
         success: function(response) {
             let html = '';
