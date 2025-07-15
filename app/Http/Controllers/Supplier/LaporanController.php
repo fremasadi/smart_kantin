@@ -10,25 +10,16 @@ use Illuminate\Http\Request;
 
 class LaporanController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = OrderItem::with(['order', 'product']);
+    public function index()
+{
+    $orderItems = OrderItem::with(['order', 'product'])
+        ->whereDate('created_at', now()->toDateString())
+        ->orderByDesc('created_at')
+        ->get();
 
-        // Filter berdasarkan tanggal
-        if ($request->filter === 'hari_ini') {
-            $query->whereDate('created_at', now()->toDateString());
-        } elseif ($request->filter === 'kemarin') {
-            $query->whereDate('created_at', now()->subDay()->toDateString());
-        } elseif ($request->filter === 'custom') {
-            if ($request->filled(['dari', 'sampai'])) {
-                $query->whereBetween('created_at', [$request->dari, $request->sampai]);
-            }
-        }
+    return view('supplier.laporan.index', compact('orderItems'));
+}
 
-        $orderItems = $query->orderByDesc('created_at')->get();
-
-        return view('supplier.laporan.index', compact('orderItems'));
-    }
 
     public function export()
     {
