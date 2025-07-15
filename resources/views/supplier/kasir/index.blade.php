@@ -196,7 +196,7 @@ $(document).ready(function() {
 // Load products
 function loadProducts() {
     $.ajax({
-        url: '{{ route("supplier.kasir.products") }}',
+        url: '{{ route("kasir.products") }}',
         method: 'GET',
         success: function(response) {
             products = response.products;
@@ -207,7 +207,7 @@ function loadProducts() {
 // Load customers
 function loadCustomers() {
     $.ajax({
-        url: '{{ route("supplier.kasir.customers") }}',
+        url: '{{ route("kasir.customers") }}',
         method: 'GET',
         success: function(response) {
             customers = response.customers;
