@@ -3,35 +3,28 @@
 namespace App\Http\Controllers\Supplier;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Models\OrderItem;
-use App\Models\Order;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $supplierId = Auth::id();
+        // Tanpa filter supplier, ambil semua data
+        $jumlahProduk = Product::count();
 
-        // Data statistik dasar
-        $jumlahProduk = Product::where('supplier_id', $supplierId)->count();
-
-        $orderItems = OrderItem::whereHas('product', function ($q) use ($supplierId) {
-            $q->where('supplier_id', $supplierId);
-        })->get();
+        $orderItems = OrderItem::all();
 
         $jumlahPesanan = $orderItems->count();
-        
-        // Hitung total pendapatan berdasarkan harga_supplier
+
+        // Total pendapatan dihitung berdasarkan harga jual produk
         $totalPendapatan = OrderItem::join('products', 'order_items.product_id', '=', 'products.id')
-            ->where('products.supplier_id', $supplierId)
-            ->sum(DB::raw('order_items.jumlah * products.harga_supplier'));
+            ->sum(DB::raw('order_items.jumlah * products.harga'));
 
         // Data untuk Chart
-        $chartData = $this->getChartData($supplierId);
+        $chartData = $this->getChartData();
 
         return view('supplier.dashboard', compact(
             'jumlahProduk',
@@ -41,16 +34,15 @@ class DashboardController extends Controller
         ));
     }
 
-    private function getChartData($supplierId)
+    private function getChartData()
     {
         // 1. Data Pendapatan Bulanan (6 bulan terakhir)
         $pendapatanBulanan = OrderItem::select(
                 DB::raw('MONTH(order_items.created_at) as bulan'),
                 DB::raw('YEAR(order_items.created_at) as tahun'),
-                DB::raw('SUM(order_items.jumlah * products.harga_supplier) as total')
+                DB::raw('SUM(order_items.jumlah * products.harga) as total')
             )
             ->join('products', 'order_items.product_id', '=', 'products.id')
-            ->where('products.supplier_id', $supplierId)
             ->where('order_items.created_at', '>=', Carbon::now()->subMonths(6))
             ->groupBy('tahun', 'bulan')
             ->orderBy('tahun', 'asc')
@@ -60,7 +52,6 @@ class DashboardController extends Controller
         $bulanLabels = [];
         $pendapatanData = [];
 
-        // Buat array 6 bulan terakhir
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
             $bulanLabels[] = $date->format('M Y');
@@ -76,7 +67,6 @@ class DashboardController extends Controller
         // 2. Produk Terlaris (Top 5)
         $produkTerlaris = OrderItem::select('products.nama_produk', DB::raw('SUM(order_items.jumlah) as total_terjual'))
             ->join('products', 'order_items.product_id', '=', 'products.id')
-            ->where('products.supplier_id', $supplierId)
             ->groupBy('products.id', 'products.nama_produk')
             ->orderBy('total_terjual', 'desc')
             ->limit(5)
@@ -94,17 +84,9 @@ class DashboardController extends Controller
             $startWeek = Carbon::now()->subWeeks($i)->startOfWeek();
             $endWeek = Carbon::now()->subWeeks($i)->endOfWeek();
 
-            if ($i == 0) {
-                $mingguLabels[] = 'Minggu Ini';
-            } else {
-                $mingguLabels[] = 'Minggu ke-' . (4 - $i);
-            }
+            $mingguLabels[] = $i === 0 ? 'Minggu Ini' : 'Minggu ke-' . (4 - $i);
 
-            $jumlahPesanan = OrderItem::whereHas('product', function ($q) use ($supplierId) {
-                    $q->where('supplier_id', $supplierId);
-                })
-                ->whereBetween('created_at', [$startWeek, $endWeek])
-                ->count();
+            $jumlahPesanan = OrderItem::whereBetween('created_at', [$startWeek, $endWeek])->count();
 
             $penjualanMingguan[] = $jumlahPesanan;
         }
