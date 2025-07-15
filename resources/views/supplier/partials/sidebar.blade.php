@@ -12,12 +12,14 @@
         </a>
     </li>
 
-    <li class="nav-item {{ request()->routeIs('products.*') ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('products.index') }}">
-            <i class="fas fa-fw fa-box"></i>
-            <span>Product</span>
+    <!-- Nav Item - Kasir -->
+    <li class="nav-item {{ request()->routeIs('supplier.kasir*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('supplier.kasir.index') }}">
+            <i class="fas fa-fw fa-cash-register"></i>
+            <span>Kasir</span>
         </a>
     </li>
+
 
     <li class="nav-item {{ request()->routeIs('supplier.laporan') ? 'active' : '' }}">
     <a class="nav-link" href="{{ route('supplier.laporan') }}">

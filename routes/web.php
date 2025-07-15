@@ -8,7 +8,7 @@ use App\Http\Controllers\SupplierDashboardController;
 use App\Http\Controllers\Supplier\ProductController;
 use App\Http\Controllers\Supplier\DashboardController;
 use App\Http\Controllers\Supplier\LaporanController;
-
+use App\Http\Controllers\Supplier\KasirController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -35,7 +35,17 @@ Route::middleware(['auth', 'role:kasir'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('supplier.dashboard');
     Route::get('/laporan-penjualan', [LaporanController::class, 'index'])->name('supplier.laporan');
     Route::get('/laporan-penjualan/export', [LaporanController::class, 'export'])->name('supplier.laporan.export');
-
+// Route baru untuk kasir
+Route::prefix('kasir')->name('kasir.')->group(function () {
+    Route::get('/', [KasirController::class, 'index'])->name('index');
+    Route::get('/products', [KasirController::class, 'getProducts'])->name('products');
+    Route::get('/customers', [KasirController::class, 'getCustomers'])->name('customers');
+    Route::get('/produk-populer', [KasirController::class, 'getProdukPopuler'])->name('produk-populer');
+    Route::get('/transaksi-terakhir', [KasirController::class, 'getTransaksiTerakhir'])->name('transaksi-terakhir');
+    Route::post('/store', [KasirController::class, 'store'])->name('store');
+    Route::get('/order/{id}', [KasirController::class, 'show'])->name('show');
+    Route::get('/print/{id}', [KasirController::class, 'printReceipt'])->name('print');
+});
     Route::post('/logout', function () {
         Auth::logout();
         return redirect('/login');
