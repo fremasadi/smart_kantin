@@ -42,17 +42,23 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="nama_pelanggan">Nama Pelanggan</label>
-                                                <!-- Select untuk murid -->
-                                                <select class="form-control" id="nama_pelanggan_select" name="nama_pelanggan" required style="display: none;">
-                                                    <option value="">Pilih nama murid...</option>
-                                                </select>
+                                                <label>Nama Pelanggan</label>
+                                                <!-- Container untuk input nama pelanggan -->
+                                                <div id="nama_pelanggan_container">
+                                                    <!-- Select untuk murid -->
+                                                    <select class="form-control" id="nama_pelanggan_select" name="nama_pelanggan_select" style="display: none;">
+                                                        <option value="">Pilih nama murid...</option>
+                                                    </select>
 
-                                                <!-- Input manual untuk guru/staff -->
-                                                <input type="text" class="form-control" id="nama_pelanggan_input" name="nama_pelanggan" placeholder="Masukkan nama pelanggan..." style="display: none;">
+                                                    <!-- Input manual untuk guru/staff -->
+                                                    <input type="text" class="form-control" id="nama_pelanggan_input" name="nama_pelanggan_input" placeholder="Masukkan nama pelanggan..." style="display: none;">
 
-                                                <!-- Default placeholder -->
-                                                <input type="text" class="form-control" id="nama_pelanggan_placeholder" placeholder="Silakan pilih jenis pelanggan dulu..." disabled>
+                                                    <!-- Default placeholder -->
+                                                    <input type="text" class="form-control" id="nama_pelanggan_placeholder" placeholder="Silakan pilih jenis pelanggan dulu..." disabled readonly>
+                                                </div>
+
+                                                <!-- Hidden input untuk menampung nilai nama pelanggan yang sebenarnya -->
+                                                <input type="hidden" id="nama_pelanggan" name="nama_pelanggan">
                                             </div>
                                         </div>
                                     </div>
@@ -229,23 +235,23 @@ function addOrderItem() {
             <div class="row">
                 <div class="col-md-5">
                     <div class="form-group">
-                        <label>Produk</label>
-                        <select class="form-control product-select" name="items[${itemCounter}][product_id]" required>
+                        <label for="product_${itemCounter}">Produk</label>
+                        <select class="form-control product-select" id="product_${itemCounter}" name="items[${itemCounter}][product_id]" required>
                             <option value="">Pilih produk...</option>
                         </select>
                     </div>
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label>Qty</label>
-                        <input type="number" class="form-control quantity-input" name="items[${itemCounter}][jumlah]" min="1" value="1" required>
+                        <label for="quantity_${itemCounter}">Qty</label>
+                        <input type="number" class="form-control quantity-input" id="quantity_${itemCounter}" name="items[${itemCounter}][jumlah]" min="1" value="1" required>
                         <small class="text-muted stock-info"></small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label>Subtotal</label>
-                        <input type="text" class="form-control subtotal-display" readonly>
+                        <label for="subtotal_${itemCounter}">Subtotal</label>
+                        <input type="text" class="form-control subtotal-display" id="subtotal_${itemCounter}" readonly>
                         <input type="hidden" class="subtotal-value" name="items[${itemCounter}][subtotal]" value="0">
                     </div>
                 </div>
@@ -261,8 +267,8 @@ function addOrderItem() {
             <div class="row">
                 <div class="col-md-12">
                     <div class="form-group">
-                        <label>Catatan Item</label>
-                        <textarea class="form-control" name="items[${itemCounter}][catatan_item]" rows="2" placeholder="Tambahan, kurang pedas, dll..."></textarea>
+                        <label for="catatan_item_${itemCounter}">Catatan Item</label>
+                        <textarea class="form-control" id="catatan_item_${itemCounter}" name="items[${itemCounter}][catatan_item]" rows="2" placeholder="Tambahan, kurang pedas, dll..."></textarea>
                     </div>
                 </div>
             </div>
@@ -273,7 +279,7 @@ function addOrderItem() {
     $('#orderItems').append(itemHtml);
 
     // Populate product options
-    const productSelect = $(`#item_${itemCounter} .product-select`);
+    const productSelect = $(`#product_${itemCounter}`);
     Object.values(products).forEach(function(product) {
         const stokInfo = product.stok > 0 ? ` (Stok: ${product.stok})` : ' (HABIS)';
         productSelect.append(`<option value="${product.id}" data-harga="${product.harga}" data-stok="${product.stok}">${product.nama_produk} - ${formatRupiah(product.harga)}${stokInfo}</option>`);
@@ -301,9 +307,13 @@ function resetForm() {
     $('#saldo_section').hide();
     $('#payment_info').hide();
     $('#saldo_warning').hide();
+
+    // Reset nama pelanggan fields
     $('#nama_pelanggan_select').hide();
     $('#nama_pelanggan_input').hide();
     $('#nama_pelanggan_placeholder').show();
+    $('#nama_pelanggan').val('');
+
     itemCounter = 0;
     updatePaymentMethods();
     addOrderItem();
@@ -518,367 +528,34 @@ function loadTransaksiTerakhir() {
 }
 
 // DOCUMENT READY DAN EVENT HANDLERS
-// PERBAIKAN UTAMA UNTUK MASALAH TOMBOL TIDAK BISA DIKLIK
-
 $(document).ready(function() {
-    // PERBAIKAN 1: Pindahkan semua definisi fungsi ke dalam document ready
-    let itemCounter = 0;
-    let products = {};
-    let customers = {};
-
-    // Format rupiah
-    function formatRupiah(angka) {
-        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    }
-
-    // Add order item
-    function addOrderItem() {
-        itemCounter++;
-        const itemHtml = `
-            <div class="order-item mb-3 p-3 border rounded" id="item_${itemCounter}">
-                <div class="row">
-                    <div class="col-md-5">
-                        <div class="form-group">
-                            <label>Produk</label>
-                            <select class="form-control product-select" name="items[${itemCounter}][product_id]" required>
-                                <option value="">Pilih produk...</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label>Qty</label>
-                            <input type="number" class="form-control quantity-input" name="items[${itemCounter}][jumlah]" min="1" value="1" required>
-                            <small class="text-muted stock-info"></small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Subtotal</label>
-                            <input type="text" class="form-control subtotal-display" readonly>
-                            <input type="hidden" class="subtotal-value" name="items[${itemCounter}][subtotal]" value="0">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button type="button" class="btn btn-danger btn-sm d-block remove-item-btn" data-item-id="${itemCounter}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="form-group">
-                            <label>Catatan Item</label>
-                            <textarea class="form-control" name="items[${itemCounter}][catatan_item]" rows="2" placeholder="Tambahan, kurang pedas, dll..."></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="stock-warning"></div>
-            </div>
-        `;
-
-        $('#orderItems').append(itemHtml);
-
-        // PERBAIKAN 2: Pastikan products sudah ter-load sebelum populate
-        if (Object.keys(products).length > 0) {
-            const productSelect = $(`#item_${itemCounter} .product-select`);
-            Object.values(products).forEach(function(product) {
-                const stokInfo = product.stok > 0 ? ` (Stok: ${product.stok})` : ' (HABIS)';
-                productSelect.append(`<option value="${product.id}" data-harga="${product.harga}" data-stok="${product.stok}">${product.nama_produk} - ${formatRupiah(product.harga)}${stokInfo}</option>`);
-            });
-        }
-
-        // Bind events untuk item yang baru ditambahkan
-        bindItemEvents(itemCounter);
-    }
-
-    // Remove order item
-    function removeOrderItem(itemId) {
-        $(`#item_${itemId}`).remove();
-        calculateTotal();
-    }
-
-    // Reset form
-    function resetForm() {
-        $('#kasirForm')[0].reset();
-        $('#orderItems').empty();
-        $('#saldo_section').hide();
-        $('#payment_info').hide();
-        $('#saldo_warning').hide();
-        $('#nama_pelanggan_select').hide();
-        $('#nama_pelanggan_input').hide();
-        $('#nama_pelanggan_placeholder').show();
-        itemCounter = 0;
-        updatePaymentMethods();
-        addOrderItem();
-        calculateTotal();
-    }
-
-    // Update payment methods
-    function updatePaymentMethods() {
-        const metodePembayaran = $('#metode_pembayaran');
-        const jenisPelanggan = $('#jenis_pelanggan').val();
-
-        metodePembayaran.empty();
-        metodePembayaran.append('<option value="">Pilih metode pembayaran...</option>');
-        metodePembayaran.append('<option value="tunai">💵 Tunai</option>');
-
-        if (jenisPelanggan === 'murid') {
-            metodePembayaran.append('<option value="saldo">💳 Saldo Murid</option>');
-        }
-    }
-
-    // Calculate total
-    function calculateTotal() {
-        let total = 0;
-
-        $('.subtotal-value').each(function() {
-            total += parseInt($(this).val()) || 0;
-        });
-
-        $('#total_harga').val(total);
-        $('#total_display').text(formatRupiah(total));
-
-        // Calculate kembalian
-        const metodePembayaran = $('#metode_pembayaran').val();
-        const jumlahBayar = parseInt($('#jumlah_bayar').val()) || 0;
-        const saldoMurid = parseInt($('#saldo_murid').val()) || 0;
-
-        let kembalian = 0;
-        let showSaldoWarning = false;
-
-        if (metodePembayaran === 'saldo' && $('#jenis_pelanggan').val() === 'murid') {
-            $('#jumlah_bayar').val(total);
-            kembalian = saldoMurid >= total ? (saldoMurid - total) : 0;
-            showSaldoWarning = total > saldoMurid;
-        } else {
-            kembalian = jumlahBayar >= total ? (jumlahBayar - total) : 0;
-        }
-
-        $('#kembalian').val(kembalian);
-        $('#kembalian_display').text(formatRupiah(kembalian));
-
-        // Show/hide saldo warning
-        if (showSaldoWarning) {
-            $('#saldo_warning').show();
-        } else {
-            $('#saldo_warning').hide();
-        }
-    }
-
-    // Update subtotal
-    function updateSubtotal(itemId) {
-        const itemContainer = $(`#item_${itemId}`);
-        const selectedOption = itemContainer.find('.product-select option:selected');
-        const harga = selectedOption.data('harga') || 0;
-        const quantity = parseInt(itemContainer.find('.quantity-input').val()) || 0;
-        const subtotal = harga * quantity;
-
-        itemContainer.find('.subtotal-display').val(formatRupiah(subtotal));
-        itemContainer.find('.subtotal-value').val(subtotal);
-
-        calculateTotal();
-    }
-
-    // Bind events untuk item
-    function bindItemEvents(itemId) {
-        const itemContainer = $(`#item_${itemId}`);
-
-        // Product change
-        itemContainer.find('.product-select').off('change').on('change', function() {
-            const selectedOption = $(this).find('option:selected');
-            const harga = selectedOption.data('harga') || 0;
-            const stok = selectedOption.data('stok') || 0;
-            const quantity = itemContainer.find('.quantity-input');
-            const stockInfo = itemContainer.find('.stock-info');
-            const stockWarning = itemContainer.find('.stock-warning');
-
-            // Update stock info
-            if (stok > 0) {
-                stockInfo.text(`Stok tersedia: ${stok}`);
-                stockInfo.removeClass('text-danger').addClass('text-success');
-            } else {
-                stockInfo.text('Stok habis');
-                stockInfo.removeClass('text-success').addClass('text-danger');
-            }
-
-            // Update quantity max
-            quantity.attr('max', stok);
-
-            if (stok <= 0) {
-                quantity.val(0);
-                stockWarning.html('<div class="alert alert-danger">🚫 Produk ini habis stok!</div>');
-            } else if (stok <= 5) {
-                stockWarning.html(`<div class="alert alert-warning">⚠️ Stok tinggal ${stok} item!</div>`);
-            } else {
-                stockWarning.html('');
-            }
-
-            updateSubtotal(itemId);
-        });
-
-        // Quantity change
-        itemContainer.find('.quantity-input').off('input').on('input', function() {
-            const productSelect = itemContainer.find('.product-select');
-            const selectedOption = productSelect.find('option:selected');
-            const stok = selectedOption.data('stok') || 0;
-            const quantity = parseInt($(this).val()) || 0;
-
-            if (quantity > stok) {
-                $(this).val(stok);
-                alert(`Stok tersedia hanya: ${stok}`);
-            }
-
-            updateSubtotal(itemId);
-        });
-    }
-
-    // PERBAIKAN 3: Fungsi load dengan Promise untuk memastikan data ter-load
-    function loadProducts() {
-        return $.ajax({
-            url: '{{ route("kasir.products") }}',
-            method: 'GET',
-            success: function(response) {
-                products = response.products || {};
-                console.log('Products loaded:', products);
-            },
-            error: function(xhr) {
-                console.error('Error loading products:', xhr);
-                products = {};
-            }
-        });
-    }
-
-    function loadCustomers() {
-        return $.ajax({
-            url: '{{ route("kasir.customers") }}',
-            method: 'GET',
-            success: function(response) {
-                customers = response.customers || {};
-                console.log('Customers loaded:', customers);
-            },
-            error: function(xhr) {
-                console.error('Error loading customers:', xhr);
-                customers = {};
-            }
-        });
-    }
-
-    // Load produk populer
-    function loadProdukPopuler() {
-        $.ajax({
-            url: '{{ route("kasir.produk-populer") }}',
-            method: 'GET',
-            success: function(response) {
-                let html = '';
-                if (response.products && response.products.length > 0) {
-                    response.products.forEach(function(product) {
-                        html += `
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="mr-3">
-                                    <div class="icon-circle bg-primary">
-                                        <i class="fas fa-box text-white"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="small text-gray-500">${product.nama_produk}</div>
-                                    <div class="font-weight-bold">${formatRupiah(product.harga)}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    html = '<p class="text-muted">Tidak ada data produk populer</p>';
-                }
-                $('#produk_populer').html(html);
-            },
-            error: function(xhr) {
-                console.error('Error loading popular products:', xhr);
-                $('#produk_populer').html('<p class="text-danger">Error loading data</p>');
-            }
-        });
-    }
-
-    // Load transaksi terakhir
-    function loadTransaksiTerakhir() {
-        $.ajax({
-            url: '{{ route("kasir.transaksi-terakhir") }}',
-            method: 'GET',
-            success: function(response) {
-                let html = '';
-                if (response.transactions && response.transactions.length > 0) {
-                    response.transactions.forEach(function(transaction) {
-                        html += `
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="mr-3">
-                                    <div class="icon-circle bg-success">
-                                        <i class="fas fa-receipt text-white"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="small text-gray-500">${transaction.nama_pelanggan}</div>
-                                    <div class="font-weight-bold">${formatRupiah(transaction.total_harga)}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    html = '<p class="text-muted">Belum ada transaksi</p>';
-                }
-                $('#transaksi_terakhir').html(html);
-            },
-            error: function(xhr) {
-                console.error('Error loading recent transactions:', xhr);
-                $('#transaksi_terakhir').html('<p class="text-danger">Error loading data</p>');
-            }
-        });
-    }
-
-    // PERBAIKAN 4: Inisialisasi dengan Promise.all untuk memastikan semua data ter-load
-    Promise.all([loadProducts(), loadCustomers()])
-        .then(function() {
-            console.log('All data loaded successfully');
-            // Tambah item pertama setelah data ter-load
-            addOrderItem();
-        })
-        .catch(function(error) {
-            console.error('Error loading initial data:', error);
-            // Tetap tambahkan item meskipun ada error
-            addOrderItem();
-        });
-
-    // Load data sidebar
+    // Load data saat halaman dimuat
+    loadProducts();
+    loadCustomers();
     loadProdukPopuler();
     loadTransaksiTerakhir();
 
-    // PERBAIKAN 5: Event handlers dengan debugging
-    $('#addItemBtn').off('click').on('click', function(e) {
-        e.preventDefault();
-        console.log('Add item button clicked');
+    // Tambah item pertama
+    addOrderItem();
+
+    // Event handlers
+    $('#addItemBtn').click(function() {
         addOrderItem();
     });
 
-    $('#resetBtn').off('click').on('click', function(e) {
-        e.preventDefault();
-        console.log('Reset button clicked');
+    $('#resetBtn').click(function() {
         resetForm();
     });
 
-    // PERBAIKAN 6: Event delegation untuk remove item
-    $(document).off('click', '.remove-item-btn').on('click', '.remove-item-btn', function(e) {
-        e.preventDefault();
+    // Handle remove item with event delegation
+    $(document).on('click', '.remove-item-btn', function() {
         const itemId = $(this).data('item-id');
-        console.log('Remove item clicked:', itemId);
         removeOrderItem(itemId);
     });
 
-    // PERBAIKAN 7: Handle jenis pelanggan change dengan debugging
-    $('#jenis_pelanggan').off('change').on('change', function() {
+    // Handle jenis pelanggan change
+    $('#jenis_pelanggan').change(function() {
         const jenis = $(this).val();
-        console.log('Jenis pelanggan changed to:', jenis);
 
         // Hide all input fields
         $('#nama_pelanggan_select').hide();
@@ -890,49 +567,47 @@ $(document).ready(function() {
         // Reset values
         $('#nama_pelanggan_select').val('');
         $('#nama_pelanggan_input').val('');
+        $('#nama_pelanggan').val('');
         $('#saldo_murid').val(0);
         $('#saldo_display').text('Rp 0');
         $('#kelas_display').text('-');
 
         if (jenis === 'murid') {
-            console.log('Showing murid select');
+            // Show select for murid
             $('#nama_pelanggan_select').show();
-            $('#nama_pelanggan_select').prop('name', 'nama_pelanggan');
-            $('#nama_pelanggan_input').prop('name', '');
 
             // Populate murid options
             const muridSelect = $('#nama_pelanggan_select');
             muridSelect.empty().append('<option value="">Pilih nama murid...</option>');
 
-            if (customers.murid && customers.murid.length > 0) {
+            if (customers.murid) {
                 customers.murid.forEach(function(murid) {
                     muridSelect.append(`<option value="${murid.name}" data-saldo="${murid.saldo}" data-kelas="${murid.kelas}">${murid.display_name}</option>`);
                 });
-                console.log('Murid options populated:', customers.murid.length);
-            } else {
-                console.log('No murid data available');
-                muridSelect.append('<option value="">Data murid tidak tersedia</option>');
             }
         } else if (jenis === 'guru' || jenis === 'staff') {
-            console.log('Showing guru/staff input');
+            // Show input for guru/staff
             $('#nama_pelanggan_input').show();
-            $('#nama_pelanggan_input').prop('name', 'nama_pelanggan');
-            $('#nama_pelanggan_select').prop('name', '');
             $('#payment_info').show();
         } else {
-            console.log('Showing placeholder');
+            // Show placeholder
             $('#nama_pelanggan_placeholder').show();
         }
 
+        // Update payment methods
         updatePaymentMethods();
         calculateTotal();
     });
 
-    // Sisanya event handlers sama...
-    $('#nama_pelanggan_select').off('change').on('change', function() {
+    // Handle nama pelanggan change (untuk murid)
+    $('#nama_pelanggan_select').change(function() {
         const selectedOption = $(this).find('option:selected');
+        const nama = $(this).val();
         const saldo = selectedOption.data('saldo') || 0;
         const kelas = selectedOption.data('kelas') || '-';
+
+        // Update hidden field
+        $('#nama_pelanggan').val(nama);
 
         $('#saldo_murid').val(saldo);
         $('#saldo_display').text(formatRupiah(saldo));
@@ -942,11 +617,18 @@ $(document).ready(function() {
         calculateTotal();
     });
 
-    $('#nama_pelanggan_input').off('input').on('input', function() {
+    // Handle nama pelanggan input (untuk guru/staff)
+    $('#nama_pelanggan_input').on('input', function() {
+        const nama = $(this).val();
+
+        // Update hidden field
+        $('#nama_pelanggan').val(nama);
+
         calculateTotal();
     });
 
-    $('#metode_pembayaran').off('change').on('change', function() {
+    // Handle metode pembayaran change
+    $('#metode_pembayaran').change(function() {
         const metode = $(this).val();
         const jumlahBayar = $('#jumlah_bayar');
         const kembalianLabel = $('#kembalian_label');
@@ -963,14 +645,14 @@ $(document).ready(function() {
         calculateTotal();
     });
 
-    $('#jumlah_bayar').off('input').on('input', function() {
+    // Handle jumlah bayar change
+    $('#jumlah_bayar').on('input', function() {
         calculateTotal();
     });
 
     // Form submission
-    $('#kasirForm').off('submit').on('submit', function(e) {
+    $('#kasirForm').submit(function(e) {
         e.preventDefault();
-        console.log('Form submitted');
 
         const formData = new FormData(this);
 
@@ -996,13 +678,5 @@ $(document).ready(function() {
         });
     });
 });
-
-// PERBAIKAN 8: Debugging helper
-window.debugKasir = function() {
-    console.log('Products:', products);
-    console.log('Customers:', customers);
-    console.log('Item counter:', itemCounter);
-    console.log('Order items:', $('.order-item').length);
-};
 </script>
 @endsection
