@@ -22,7 +22,7 @@
     <li class="nav-item {{ request()->routeIs('supplier.laporan') ? 'active' : '' }}">
     <a class="nav-link" href="{{ route('supplier.laporan') }}">
         <i class="fas fa-fw fa-box"></i>
-        <span>Laporan Penjualan</span>
+        <span>Laporan Harian</span>
     </a>
 </li>
 

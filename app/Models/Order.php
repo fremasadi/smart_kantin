@@ -11,6 +11,7 @@ class Order extends Model
 
     protected $fillable = [
         'nomor_pesanan',
+        'jenis_pelanggan', // ✅ tambahkan ini
         'nama_pelanggan',
         'total_harga',
         'jumlah_bayar',
@@ -38,21 +39,21 @@ class Order extends Model
         $lastOrder = self::where('nomor_pesanan', 'like', $prefix . '%')
             ->latest()
             ->first();
-        
+
         if ($lastOrder) {
             $lastNumber = intval(substr($lastOrder->nomor_pesanan, -4));
             $nextNumber = $lastNumber + 1;
         } else {
             $nextNumber = 1;
         }
-        
+
         return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
     protected static function boot()
 {
     parent::boot();
-    
+
     static::creating(function ($order) {
         $order->nomor_pesanan = self::generateNomorPesanan();
         $order->tanggal_pesanan = now();
