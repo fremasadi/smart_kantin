@@ -1,4 +1,3 @@
-
 @extends('layouts.supplier')
 
 @section('content')
@@ -6,7 +5,7 @@
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Sistem Kasir</h1>
-        <button class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" onclick="resetForm()">
+        <button class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" id="resetBtn">
             <i class="fas fa-refresh fa-sm text-white-50"></i> Reset Form
         </button>
     </div>
@@ -101,7 +100,7 @@
                                     <div id="orderItems">
                                         <!-- Item pesanan akan ditambahkan di sini -->
                                     </div>
-                                    <button type="button" class="btn btn-success btn-sm" onclick="addOrderItem()">
+                                    <button type="button" class="btn btn-success btn-sm" id="addItemBtn">
                                         <i class="fas fa-plus"></i> Tambah Item
                                     </button>
                                 </div>
@@ -221,142 +220,7 @@ let itemCounter = 0;
 let products = {};
 let customers = {};
 
-// Load data saat halaman dimuat
-$(document).ready(function() {
-    loadProducts();
-    loadCustomers();
-    loadProdukPopuler();
-    loadTransaksiTerakhir();
-    addOrderItem(); // Tambah item pertama
-});
-
-// Load products
-function loadProducts() {
-    $.ajax({
-        url: '{{ route("kasir.products") }}',
-        method: 'GET',
-        success: function(response) {
-            products = response.products;
-        }
-    });
-}
-
-// Load customers
-function loadCustomers() {
-    $.ajax({
-        url: '{{ route("kasir.customers") }}',
-        method: 'GET',
-        success: function(response) {
-            customers = response.customers;
-        }
-    });
-}
-
-// Handle jenis pelanggan change
-$('#jenis_pelanggan').change(function() {
-    const jenis = $(this).val();
-
-    // Hide all input fields
-    $('#nama_pelanggan_select').hide();
-    $('#nama_pelanggan_input').hide();
-    $('#nama_pelanggan_placeholder').hide();
-    $('#saldo_section').hide();
-    $('#payment_info').hide();
-
-    // Reset values
-    $('#nama_pelanggan_select').val('');
-    $('#nama_pelanggan_input').val('');
-    $('#saldo_murid').val(0);
-    $('#saldo_display').text('Rp 0');
-    $('#kelas_display').text('-');
-
-    if (jenis === 'murid') {
-        // Show select for murid
-        $('#nama_pelanggan_select').show();
-        $('#nama_pelanggan_select').prop('name', 'nama_pelanggan');
-        $('#nama_pelanggan_input').prop('name', '');
-
-        // Populate murid options
-        const muridSelect = $('#nama_pelanggan_select');
-        muridSelect.empty().append('<option value="">Pilih nama murid...</option>');
-
-        if (customers.murid) {
-            customers.murid.forEach(function(murid) {
-                muridSelect.append(`<option value="${murid.name}" data-saldo="${murid.saldo}" data-kelas="${murid.kelas}">${murid.display_name}</option>`);
-            });
-        }
-    } else if (jenis === 'guru' || jenis === 'staff') {
-        // Show input for guru/staff
-        $('#nama_pelanggan_input').show();
-        $('#nama_pelanggan_input').prop('name', 'nama_pelanggan');
-        $('#nama_pelanggan_select').prop('name', '');
-        $('#payment_info').show();
-    } else {
-        // Show placeholder
-        $('#nama_pelanggan_placeholder').show();
-    }
-
-    // Update payment methods
-    updatePaymentMethods();
-    calculateTotal();
-});
-
-// Handle nama pelanggan change (untuk murid)
-$('#nama_pelanggan_select').change(function() {
-    const selectedOption = $(this).find('option:selected');
-    const saldo = selectedOption.data('saldo') || 0;
-    const kelas = selectedOption.data('kelas') || '-';
-
-    $('#saldo_murid').val(saldo);
-    $('#saldo_display').text(formatRupiah(saldo));
-    $('#kelas_display').text(kelas);
-    $('#saldo_section').show();
-
-    calculateTotal();
-});
-
-// Handle nama pelanggan input (untuk guru/staff)
-$('#nama_pelanggan_input').on('input', function() {
-    calculateTotal();
-});
-
-// Update payment methods
-function updatePaymentMethods() {
-    const metodePembayaran = $('#metode_pembayaran');
-    const jenisPelanggan = $('#jenis_pelanggan').val();
-
-    metodePembayaran.empty();
-    metodePembayaran.append('<option value="">Pilih metode pembayaran...</option>');
-    metodePembayaran.append('<option value="tunai">💵 Tunai</option>');
-
-    if (jenisPelanggan === 'murid') {
-        metodePembayaran.append('<option value="saldo">💳 Saldo Murid</option>');
-    }
-}
-
-// Handle metode pembayaran change
-$('#metode_pembayaran').change(function() {
-    const metode = $(this).val();
-    const jumlahBayar = $('#jumlah_bayar');
-    const kembalianLabel = $('#kembalian_label');
-
-    if (metode === 'saldo' && $('#jenis_pelanggan').val() === 'murid') {
-        jumlahBayar.prop('disabled', true);
-        jumlahBayar.val($('#total_harga').val());
-        kembalianLabel.text('SISA SALDO');
-    } else {
-        jumlahBayar.prop('disabled', false);
-        kembalianLabel.text('KEMBALIAN');
-    }
-
-    calculateTotal();
-});
-
-// Handle jumlah bayar change
-$('#jumlah_bayar').on('input', function() {
-    calculateTotal();
-});
-
+// DEFINISI FUNGSI-FUNGSI UTAMA DULU
 // Add order item
 function addOrderItem() {
     itemCounter++;
@@ -388,7 +252,7 @@ function addOrderItem() {
                 <div class="col-md-2">
                     <div class="form-group">
                         <label>&nbsp;</label>
-                        <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeOrderItem(${itemCounter})">
+                        <button type="button" class="btn btn-danger btn-sm d-block remove-item-btn" data-item-id="${itemCounter}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -422,6 +286,93 @@ function addOrderItem() {
 // Remove order item
 function removeOrderItem(itemId) {
     $(`#item_${itemId}`).remove();
+    calculateTotal();
+}
+
+// Format rupiah
+function formatRupiah(angka) {
+    return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// Reset form
+function resetForm() {
+    $('#kasirForm')[0].reset();
+    $('#orderItems').empty();
+    $('#saldo_section').hide();
+    $('#payment_info').hide();
+    $('#saldo_warning').hide();
+    $('#nama_pelanggan_select').hide();
+    $('#nama_pelanggan_input').hide();
+    $('#nama_pelanggan_placeholder').show();
+    itemCounter = 0;
+    updatePaymentMethods();
+    addOrderItem();
+    calculateTotal();
+}
+
+// Update payment methods
+function updatePaymentMethods() {
+    const metodePembayaran = $('#metode_pembayaran');
+    const jenisPelanggan = $('#jenis_pelanggan').val();
+
+    metodePembayaran.empty();
+    metodePembayaran.append('<option value="">Pilih metode pembayaran...</option>');
+    metodePembayaran.append('<option value="tunai">💵 Tunai</option>');
+
+    if (jenisPelanggan === 'murid') {
+        metodePembayaran.append('<option value="saldo">💳 Saldo Murid</option>');
+    }
+}
+
+// Calculate total
+function calculateTotal() {
+    let total = 0;
+
+    $('.subtotal-value').each(function() {
+        total += parseInt($(this).val()) || 0;
+    });
+
+    $('#total_harga').val(total);
+    $('#total_display').text(formatRupiah(total));
+
+    // Calculate kembalian
+    const metodePembayaran = $('#metode_pembayaran').val();
+    const jumlahBayar = parseInt($('#jumlah_bayar').val()) || 0;
+    const saldoMurid = parseInt($('#saldo_murid').val()) || 0;
+
+    let kembalian = 0;
+    let showSaldoWarning = false;
+
+    if (metodePembayaran === 'saldo' && $('#jenis_pelanggan').val() === 'murid') {
+        $('#jumlah_bayar').val(total);
+        kembalian = saldoMurid >= total ? (saldoMurid - total) : 0;
+        showSaldoWarning = total > saldoMurid;
+    } else {
+        kembalian = jumlahBayar >= total ? (jumlahBayar - total) : 0;
+    }
+
+    $('#kembalian').val(kembalian);
+    $('#kembalian_display').text(formatRupiah(kembalian));
+
+    // Show/hide saldo warning
+    if (showSaldoWarning) {
+        $('#saldo_warning').show();
+    } else {
+        $('#saldo_warning').hide();
+    }
+}
+
+// Update subtotal
+function updateSubtotal(itemId) {
+    const itemContainer = $(`#item_${itemId}`);
+    const selectedOption = itemContainer.find('.product-select option:selected');
+    const harga = selectedOption.data('harga') || 0;
+    const quantity = parseInt(itemContainer.find('.quantity-input').val()) || 0;
+    const subtotal = harga * quantity;
+
+    itemContainer.find('.subtotal-display').val(formatRupiah(subtotal));
+    itemContainer.find('.subtotal-value').val(subtotal);
+
     calculateTotal();
 }
 
@@ -478,72 +429,32 @@ function bindItemEvents(itemId) {
     });
 }
 
-// Update subtotal
-function updateSubtotal(itemId) {
-    const itemContainer = $(`#item_${itemId}`);
-    const selectedOption = itemContainer.find('.product-select option:selected');
-    const harga = selectedOption.data('harga') || 0;
-    const quantity = parseInt(itemContainer.find('.quantity-input').val()) || 0;
-    const subtotal = harga * quantity;
-
-    itemContainer.find('.subtotal-display').val(formatRupiah(subtotal));
-    itemContainer.find('.subtotal-value').val(subtotal);
-
-    calculateTotal();
-}
-
-// Calculate total
-function calculateTotal() {
-    let total = 0;
-
-    $('.subtotal-value').each(function() {
-        total += parseInt($(this).val()) || 0;
+// Load products
+function loadProducts() {
+    $.ajax({
+        url: '{{ route("kasir.products") }}',
+        method: 'GET',
+        success: function(response) {
+            products = response.products;
+        },
+        error: function(xhr) {
+            console.error('Error loading products:', xhr);
+        }
     });
-
-    $('#total_harga').val(total);
-    $('#total_display').text(formatRupiah(total));
-
-    // Calculate kembalian
-    const metodePembayaran = $('#metode_pembayaran').val();
-    const jumlahBayar = parseInt($('#jumlah_bayar').val()) || 0;
-    const saldoMurid = parseInt($('#saldo_murid').val()) || 0;
-
-    let kembalian = 0;
-    let showSaldoWarning = false;
-
-    if (metodePembayaran === 'saldo' && $('#jenis_pelanggan').val() === 'murid') {
-        $('#jumlah_bayar').val(total);
-        kembalian = saldoMurid >= total ? (saldoMurid - total) : 0;
-        showSaldoWarning = total > saldoMurid;
-    } else {
-        kembalian = jumlahBayar >= total ? (jumlahBayar - total) : 0;
-    }
-
-    $('#kembalian').val(kembalian);
-    $('#kembalian_display').text(formatRupiah(kembalian));
-
-    // Show/hide saldo warning
-    if (showSaldoWarning) {
-        $('#saldo_warning').show();
-    } else {
-        $('#saldo_warning').hide();
-    }
 }
 
-// Format rupiah
-function formatRupiah(angka) {
-    return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-
-// Reset form
-function resetForm() {
-    $('#kasirForm')[0].reset();
-    $('#orderItems').empty();
-    $('#saldo_section').hide();
-    $('#saldo_warning').hide();
-    itemCounter = 0;
-    addOrderItem();
-    calculateTotal();
+// Load customers
+function loadCustomers() {
+    $.ajax({
+        url: '{{ route("kasir.customers") }}',
+        method: 'GET',
+        success: function(response) {
+            customers = response.customers;
+        },
+        error: function(xhr) {
+            console.error('Error loading customers:', xhr);
+        }
+    });
 }
 
 // Load produk populer
@@ -569,6 +480,9 @@ function loadProdukPopuler() {
                 `;
             });
             $('#produk_populer').html(html);
+        },
+        error: function(xhr) {
+            console.error('Error loading popular products:', xhr);
         }
     });
 }
@@ -596,34 +510,156 @@ function loadTransaksiTerakhir() {
                 `;
             });
             $('#transaksi_terakhir').html(html);
+        },
+        error: function(xhr) {
+            console.error('Error loading recent transactions:', xhr);
         }
     });
 }
 
-// Form submission
-$('#kasirForm').submit(function(e) {
-    e.preventDefault();
+// DOCUMENT READY DAN EVENT HANDLERS
+$(document).ready(function() {
+    // Load data saat halaman dimuat
+    loadProducts();
+    loadCustomers();
+    loadProdukPopuler();
+    loadTransaksiTerakhir();
 
-    const formData = new FormData(this);
+    // Tambah item pertama
+    addOrderItem();
 
-    $.ajax({
-        url: '{{ route("kasir.store") }}',
-        method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            if (response.success) {
-                alert('Transaksi berhasil disimpan!');
-                resetForm();
-                loadTransaksiTerakhir();
-            } else {
-                alert('Gagal menyimpan transaksi: ' + response.message);
+    // Event handlers
+    $('#addItemBtn').click(function() {
+        addOrderItem();
+    });
+
+    $('#resetBtn').click(function() {
+        resetForm();
+    });
+
+    // Handle remove item with event delegation
+    $(document).on('click', '.remove-item-btn', function() {
+        const itemId = $(this).data('item-id');
+        removeOrderItem(itemId);
+    });
+
+    // Handle jenis pelanggan change
+    $('#jenis_pelanggan').change(function() {
+        const jenis = $(this).val();
+
+        // Hide all input fields
+        $('#nama_pelanggan_select').hide();
+        $('#nama_pelanggan_input').hide();
+        $('#nama_pelanggan_placeholder').hide();
+        $('#saldo_section').hide();
+        $('#payment_info').hide();
+
+        // Reset values
+        $('#nama_pelanggan_select').val('');
+        $('#nama_pelanggan_input').val('');
+        $('#saldo_murid').val(0);
+        $('#saldo_display').text('Rp 0');
+        $('#kelas_display').text('-');
+
+        if (jenis === 'murid') {
+            // Show select for murid
+            $('#nama_pelanggan_select').show();
+            $('#nama_pelanggan_select').prop('name', 'nama_pelanggan');
+            $('#nama_pelanggan_input').prop('name', '');
+
+            // Populate murid options
+            const muridSelect = $('#nama_pelanggan_select');
+            muridSelect.empty().append('<option value="">Pilih nama murid...</option>');
+
+            if (customers.murid) {
+                customers.murid.forEach(function(murid) {
+                    muridSelect.append(`<option value="${murid.name}" data-saldo="${murid.saldo}" data-kelas="${murid.kelas}">${murid.display_name}</option>`);
+                });
             }
-        },
-        error: function(xhr) {
-            alert('Terjadi kesalahan: ' + xhr.responseText);
+        } else if (jenis === 'guru' || jenis === 'staff') {
+            // Show input for guru/staff
+            $('#nama_pelanggan_input').show();
+            $('#nama_pelanggan_input').prop('name', 'nama_pelanggan');
+            $('#nama_pelanggan_select').prop('name', '');
+            $('#payment_info').show();
+        } else {
+            // Show placeholder
+            $('#nama_pelanggan_placeholder').show();
         }
+
+        // Update payment methods
+        updatePaymentMethods();
+        calculateTotal();
+    });
+
+    // Handle nama pelanggan change (untuk murid)
+    $('#nama_pelanggan_select').change(function() {
+        const selectedOption = $(this).find('option:selected');
+        const saldo = selectedOption.data('saldo') || 0;
+        const kelas = selectedOption.data('kelas') || '-';
+
+        $('#saldo_murid').val(saldo);
+        $('#saldo_display').text(formatRupiah(saldo));
+        $('#kelas_display').text(kelas);
+        $('#saldo_section').show();
+
+        calculateTotal();
+    });
+
+    // Handle nama pelanggan input (untuk guru/staff)
+    $('#nama_pelanggan_input').on('input', function() {
+        calculateTotal();
+    });
+
+    // Handle metode pembayaran change
+    $('#metode_pembayaran').change(function() {
+        const metode = $(this).val();
+        const jumlahBayar = $('#jumlah_bayar');
+        const kembalianLabel = $('#kembalian_label');
+
+        if (metode === 'saldo' && $('#jenis_pelanggan').val() === 'murid') {
+            jumlahBayar.prop('disabled', true);
+            jumlahBayar.val($('#total_harga').val());
+            kembalianLabel.text('SISA SALDO');
+        } else {
+            jumlahBayar.prop('disabled', false);
+            kembalianLabel.text('KEMBALIAN');
+        }
+
+        calculateTotal();
+    });
+
+    // Handle jumlah bayar change
+    $('#jumlah_bayar').on('input', function() {
+        calculateTotal();
+    });
+
+    // Form submission
+    $('#kasirForm').submit(function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: '{{ route("kasir.store") }}',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    alert('Transaksi berhasil disimpan!');
+                    resetForm();
+                    loadTransaksiTerakhir();
+                } else {
+                    alert('Gagal menyimpan transaksi: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error submitting form:', xhr);
+                alert('Terjadi kesalahan: ' + xhr.responseText);
+            }
+        });
     });
 });
 </script>
