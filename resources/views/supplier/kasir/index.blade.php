@@ -514,7 +514,7 @@ function loadProdukPopuler() {
 // Load transaksi terakhir
 function loadTransaksiTerakhir() {
     $.ajax({
-        url: '{{ route("supplier.kasir.transaksi-terakhir") }}',
+        url: '{{ route("kasir.transaksi-terakhir") }}',
         method: 'GET',
         success: function(response) {
             let html = '';
@@ -545,7 +545,7 @@ $('#kasirForm').submit(function(e) {
     const formData = new FormData(this);
 
     $.ajax({
-        url: '{{ route("supplier.kasir.store") }}',
+        url: '{{ route("kasir.store") }}',
         method: 'POST',
         data: formData,
         processData: false,
