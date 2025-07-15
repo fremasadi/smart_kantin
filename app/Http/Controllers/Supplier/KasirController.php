@@ -39,44 +39,15 @@ class KasirController extends Controller
         $murid = Murid::all();
         foreach ($murid as $m) {
             $customers['murid'][] = [
+                'id' => $m->id,
                 'name' => $m->name,
                 'display_name' => "{$m->name} - Kelas {$m->kelas} (Saldo: Rp " . number_format($m->saldo, 0, ',', '.') . ")",
-                'saldo' => $m->saldo
+                'saldo' => $m->saldo,
+                'kelas' => $m->kelas
             ];
         }
 
-        // Untuk guru dan staff, Anda bisa tambahkan model atau data statis
-        // Contoh data statis untuk guru dan staff
-        $guru_list = [
-            'Budi Santoso',
-            'Siti Nurhaliza',
-            'Ahmad Fauzi',
-            'Rina Kusuma'
-        ];
-
-        $staff_list = [
-            'Dewi Sartika',
-            'Joko Widodo',
-            'Ani Yudhoyono',
-            'Bapak Sumarna'
-        ];
-
-        foreach ($guru_list as $guru) {
-            $customers['guru'][] = [
-                'name' => $guru,
-                'display_name' => $guru,
-                'saldo' => 0
-            ];
-        }
-
-        foreach ($staff_list as $staff) {
-            $customers['staff'][] = [
-                'name' => $staff,
-                'display_name' => $staff,
-                'saldo' => 0
-            ];
-        }
-
+        // Untuk guru dan staff, input manual (tanpa data dari database)
         return response()->json([
             'customers' => $customers
         ]);
@@ -129,6 +100,11 @@ class KasirController extends Controller
         try {
             DB::beginTransaction();
 
+            // Validasi pembayaran guru dan staff hanya bisa tunai
+            if (in_array($request->jenis_pelanggan, ['guru', 'staff']) && $request->metode_pembayaran !== 'tunai') {
+                throw new \Exception('Guru dan Staff hanya bisa melakukan pembayaran tunai');
+            }
+
             // Hitung total
             $total = 0;
             foreach ($request->items as $item) {
@@ -159,7 +135,7 @@ class KasirController extends Controller
                 }
             }
 
-            // Buat order
+            // Buat order (tanpa user_id)
             $order = Order::create([
                 'jenis_pelanggan' => $request->jenis_pelanggan,
                 'nama_pelanggan' => $request->nama_pelanggan,
@@ -168,8 +144,7 @@ class KasirController extends Controller
                 'jumlah_bayar' => $request->jumlah_bayar,
                 'kembalian' => $request->jumlah_bayar - $total,
                 'status' => 'selesai',
-                'tanggal_order' => now(),
-                'user_id' => auth()->id()
+                'catatan' => $request->catatan ?? null
             ]);
 
             // Simpan order items dan update stok

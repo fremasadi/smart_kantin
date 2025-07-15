@@ -1,3 +1,4 @@
+
 @extends('layouts.supplier')
 
 @section('content')
@@ -43,9 +44,16 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="nama_pelanggan">Nama Pelanggan</label>
-                                                <select class="form-control" id="nama_pelanggan" name="nama_pelanggan" required disabled>
-                                                    <option value="">Pilih nama pelanggan...</option>
+                                                <!-- Select untuk murid -->
+                                                <select class="form-control" id="nama_pelanggan_select" name="nama_pelanggan" required style="display: none;">
+                                                    <option value="">Pilih nama murid...</option>
                                                 </select>
+
+                                                <!-- Input manual untuk guru/staff -->
+                                                <input type="text" class="form-control" id="nama_pelanggan_input" name="nama_pelanggan" placeholder="Masukkan nama pelanggan..." style="display: none;">
+
+                                                <!-- Default placeholder -->
+                                                <input type="text" class="form-control" id="nama_pelanggan_placeholder" placeholder="Silakan pilih jenis pelanggan dulu..." disabled>
                                             </div>
                                         </div>
                                     </div>
@@ -58,6 +66,24 @@
                                                 <div class="alert alert-info">
                                                     <strong id="saldo_display">Rp 0</strong>
                                                 </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Kelas</label>
+                                                <div class="alert alert-secondary">
+                                                    <strong id="kelas_display">-</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Info pembayaran untuk guru/staff -->
+                                    <div id="payment_info" class="row" style="display: none;">
+                                        <div class="col-md-12">
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-info-circle mr-2"></i>
+                                                <strong>Informasi:</strong> Guru dan Staff hanya dapat melakukan pembayaran tunai.
                                             </div>
                                         </div>
                                     </div>
@@ -105,6 +131,7 @@
                                             <div class="form-group">
                                                 <label for="metode_pembayaran">Metode Pembayaran</label>
                                                 <select class="form-control" id="metode_pembayaran" name="metode_pembayaran" required>
+                                                    <option value="">Pilih metode pembayaran...</option>
                                                     <option value="tunai">💵 Tunai</option>
                                                 </select>
                                             </div>
@@ -128,6 +155,16 @@
                                     <!-- Warning saldo tidak cukup -->
                                     <div id="saldo_warning" class="alert alert-danger" style="display: none;">
                                         <strong>⚠️ Saldo tidak mencukupi untuk pesanan ini!</strong>
+                                    </div>
+
+                                    <!-- Catatan pesanan -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label for="catatan">Catatan Pesanan</label>
+                                                <textarea class="form-control" id="catatan" name="catatan" rows="3" placeholder="Catatan tambahan untuk pesanan ini..."></textarea>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -218,44 +255,68 @@ function loadCustomers() {
 // Handle jenis pelanggan change
 $('#jenis_pelanggan').change(function() {
     const jenis = $(this).val();
-    const namaSelect = $('#nama_pelanggan');
 
-    namaSelect.empty().append('<option value="">Pilih nama pelanggan...</option>');
+    // Hide all input fields
+    $('#nama_pelanggan_select').hide();
+    $('#nama_pelanggan_input').hide();
+    $('#nama_pelanggan_placeholder').hide();
+    $('#saldo_section').hide();
+    $('#payment_info').hide();
 
-    if (jenis && customers[jenis]) {
-        customers[jenis].forEach(function(customer) {
-            namaSelect.append(`<option value="${customer.name}" data-saldo="${customer.saldo || 0}">${customer.display_name}</option>`);
-        });
-        namaSelect.prop('disabled', false);
-    } else {
-        namaSelect.prop('disabled', true);
-    }
-
-    // Update metode pembayaran
-    updatePaymentMethods();
-
-    // Reset saldo
+    // Reset values
+    $('#nama_pelanggan_select').val('');
+    $('#nama_pelanggan_input').val('');
     $('#saldo_murid').val(0);
     $('#saldo_display').text('Rp 0');
-    $('#saldo_section').hide();
+    $('#kelas_display').text('-');
+
+    if (jenis === 'murid') {
+        // Show select for murid
+        $('#nama_pelanggan_select').show();
+        $('#nama_pelanggan_select').prop('name', 'nama_pelanggan');
+        $('#nama_pelanggan_input').prop('name', '');
+
+        // Populate murid options
+        const muridSelect = $('#nama_pelanggan_select');
+        muridSelect.empty().append('<option value="">Pilih nama murid...</option>');
+
+        if (customers.murid) {
+            customers.murid.forEach(function(murid) {
+                muridSelect.append(`<option value="${murid.name}" data-saldo="${murid.saldo}" data-kelas="${murid.kelas}">${murid.display_name}</option>`);
+            });
+        }
+    } else if (jenis === 'guru' || jenis === 'staff') {
+        // Show input for guru/staff
+        $('#nama_pelanggan_input').show();
+        $('#nama_pelanggan_input').prop('name', 'nama_pelanggan');
+        $('#nama_pelanggan_select').prop('name', '');
+        $('#payment_info').show();
+    } else {
+        // Show placeholder
+        $('#nama_pelanggan_placeholder').show();
+    }
+
+    // Update payment methods
+    updatePaymentMethods();
+    calculateTotal();
+});
+
+// Handle nama pelanggan change (untuk murid)
+$('#nama_pelanggan_select').change(function() {
+    const selectedOption = $(this).find('option:selected');
+    const saldo = selectedOption.data('saldo') || 0;
+    const kelas = selectedOption.data('kelas') || '-';
+
+    $('#saldo_murid').val(saldo);
+    $('#saldo_display').text(formatRupiah(saldo));
+    $('#kelas_display').text(kelas);
+    $('#saldo_section').show();
 
     calculateTotal();
 });
 
-// Handle nama pelanggan change
-$('#nama_pelanggan').change(function() {
-    const selectedOption = $(this).find('option:selected');
-    const saldo = selectedOption.data('saldo') || 0;
-
-    $('#saldo_murid').val(saldo);
-    $('#saldo_display').text(formatRupiah(saldo));
-
-    if ($('#jenis_pelanggan').val() === 'murid') {
-        $('#saldo_section').show();
-    } else {
-        $('#saldo_section').hide();
-    }
-
+// Handle nama pelanggan input (untuk guru/staff)
+$('#nama_pelanggan_input').on('input', function() {
     calculateTotal();
 });
 
@@ -265,6 +326,7 @@ function updatePaymentMethods() {
     const jenisPelanggan = $('#jenis_pelanggan').val();
 
     metodePembayaran.empty();
+    metodePembayaran.append('<option value="">Pilih metode pembayaran...</option>');
     metodePembayaran.append('<option value="tunai">💵 Tunai</option>');
 
     if (jenisPelanggan === 'murid') {
