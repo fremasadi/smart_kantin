@@ -29,7 +29,7 @@ Route::get('/login', [SupplierAuthController::class, 'showLoginForm'])->name('su
 Route::post('/login', [SupplierAuthController::class, 'login'])->name('supplier.login.submit');
 
 // Dashboard supplier (proteksi dengan middleware)
-Route::middleware(['auth', 'role:supplier'])->group(function () {
+Route::middleware(['auth', 'role:kasir'])->group(function () {
     Route::get('/supplier/dashboard', [SupplierDashboardController::class, 'index'])->name('supplier.dashboard');
     Route::resource('products', ProductController::class);
     Route::get('dashboard', [DashboardController::class, 'index'])->name('supplier.dashboard');
