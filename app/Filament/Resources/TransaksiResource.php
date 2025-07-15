@@ -12,7 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
 class TransaksiResource extends Resource
 {
     protected static ?string $model = Transaksi::class;
@@ -65,7 +66,16 @@ class TransaksiResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Filter::make('created_at')
+                ->form([
+                    DatePicker::make('from')->label('Dari Tanggal'),
+                    DatePicker::make('until')->label('Sampai Tanggal'),
+                ])
+                ->query(function ($query, array $data) {
+                    return $query
+                        ->when($data['from'], fn ($query, $date) => $query->whereDate('created_at', '>=', $date))
+                        ->when($data['until'], fn ($query, $date) => $query->whereDate('created_at', '<=', $date));
+                }),
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
