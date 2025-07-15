@@ -26,7 +26,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        
+
         if ($user->role !== 'orangtua') {
             return response()->json([
                 'message' => 'Access denied.'

@@ -47,11 +47,11 @@ class UserResource extends Resource
                     Forms\Components\Select::make('role')
                     ->required()
                     ->options([
-                        'supplier' => 'supplier',
+                        'kasir' => 'kasir',
                         'admin' => 'Admin',
                     ])
                     ->default('orangtua')
-                
+
             ]);
     }
 
