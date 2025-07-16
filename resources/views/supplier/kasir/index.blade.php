@@ -1,171 +1,238 @@
 @extends('layouts.supplier')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h1 class="text-2xl font-bold mb-6 text-gray-800">Kasir - Buat Pesanan</h1>
-        
-        @if ($errors->any())
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-        
-        @if (session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                {{ session('success') }}
-            </div>
-        @endif
-        
-        <form action="{{ route('kasir.store') }}" method="POST" id="kasirForm">
-            @csrf
-            
-            <!-- Informasi Pelanggan -->
-            <div class="mb-8 p-4 border rounded-lg bg-gray-50">
-                <h2 class="text-lg font-semibold mb-4 text-gray-700">👤 Informasi Pelanggan</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Pelanggan</label>
-                        <select name="jenis_pelanggan" id="jenis_pelanggan" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" required>
-                            <option value="">Pilih jenis pelanggan...</option>
-                            <option value="murid">🎓 Murid</option>
-                            <option value="guru">👨‍🏫 Guru</option>
-                            <option value="staff">👥 Staff</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Nama Murid -->
-                    <div id="murid_section" style="display: none;">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Murid</label>
-                        <select name="nama_pelanggan_murid" id="nama_murid" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
-                            <option value="">Pilih murid...</option>
-                            @foreach($murids as $murid)
-                                <option value="{{ $murid->name }}" data-saldo="{{ $murid->saldo }}">
-                                    {{ $murid->name }} - Kelas {{ $murid->kelas }} (Saldo: Rp {{ number_format($murid->saldo, 0, ',', '.') }})
-                                </option>
-                            @endforeach
-                        </select>
-                        <div id="saldo_display" class="mt-2 text-blue-600 font-semibold" style="display: none;"></div>
-                    </div>
-                    
-                    <!-- Nama Guru -->
-                    <div id="guru_section" style="display: none;">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Guru</label>
-                        <input type="text" name="nama_pelanggan_guru" id="nama_guru" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Masukkan nama guru...">
-                    </div>
-                    
-                    <!-- Nama Staff -->
-                    <div id="staff_section" style="display: none;">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Staff</label>
-                        <input type="text" name="nama_pelanggan_staff" id="nama_staff" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Masukkan nama staff...">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                💳 Sistem Kasir
+            </h1>
+            <p class="text-gray-600 text-lg">Buat pesanan dengan mudah dan cepat</p>
+        </div>
+
+        <div class="max-w-6xl mx-auto">
+            @if ($errors->any())
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg shadow-sm">
+                    <div class="flex items-center">
+                        <div class="text-red-500 mr-3">⚠️</div>
+                        <div>
+                            <h4 class="text-red-800 font-semibold">Terjadi kesalahan:</h4>
+                            <ul class="text-red-700 mt-2 space-y-1">
+                                @foreach ($errors->all() as $error)
+                                    <li class="flex items-center">
+                                        <span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                                        {{ $error }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
                     </div>
                 </div>
-                
-                <input type="hidden" name="nama_pelanggan" id="nama_pelanggan">
-                <input type="hidden" name="saldo_murid" id="saldo_murid" value="0">
-            </div>
+            @endif
             
-            <!-- Daftar Pesanan -->
-            <div class="mb-8 p-4 border rounded-lg bg-gray-50">
-                <h2 class="text-lg font-semibold mb-4 text-gray-700">🛒 Daftar Pesanan</h2>
+            @if (session('success'))
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded-r-lg shadow-sm">
+                    <div class="flex items-center">
+                        <div class="text-green-500 mr-3">✅</div>
+                        <div class="text-green-800 font-semibold">{{ session('success') }}</div>
+                    </div>
+                </div>
+            @endif
+            
+            <form action="{{ route('kasir.store') }}" method="POST" id="kasirForm" class="space-y-8">
+                @csrf
                 
-                <div id="order_items">
-                    <div class="order-item mb-4 p-3 border rounded bg-white">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Produk</label>
-                                <select name="orderItems[0][product_id]" class="product-select w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" required>
-                                    <option value="">Pilih produk...</option>
-                                    @foreach($products as $product)
-                                        <option value="{{ $product->id }}" data-harga="{{ $product->harga }}" data-stok="{{ $product->stok }}">
-                                            {{ $product->nama_produk }} - Rp {{ number_format($product->harga, 0, ',', '.') }}
-                                            @if($product->stok > 0)
-                                                (Stok: {{ $product->stok }})
-                                            @else
-                                                (HABIS)
-                                            @endif
-                                        </option>
-                                    @endforeach
+                <!-- Customer Information Card -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4">
+                        <h2 class="text-xl font-bold text-white flex items-center">
+                            <span class="bg-white bg-opacity-20 rounded-full p-2 mr-3">👤</span>
+                            Informasi Pelanggan
+                        </h2>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Customer Type -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-700">Jenis Pelanggan</label>
+                                <select name="jenis_pelanggan" id="jenis_pelanggan" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" required>
+                                    <option value="">Pilih jenis pelanggan...</option>
+                                    <option value="murid">🎓 Murid</option>
+                                    <option value="guru">👨‍🏫 Guru</option>
+                                    <option value="staff">👥 Staff</option>
                                 </select>
                             </div>
                             
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Qty</label>
-                                <input type="number" name="orderItems[0][jumlah]" class="jumlah-input w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" min="1" value="1" required>
-                                <div class="stok-hint text-xs text-gray-500 mt-1"></div>
+                            <!-- Student Section -->
+                            <div id="murid_section" class="space-y-2" style="display: none;">
+                                <label class="block text-sm font-semibold text-gray-700">Nama Murid</label>
+                                <select name="nama_pelanggan_murid" id="nama_murid" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200">
+                                    <option value="">Pilih murid...</option>
+                                    @foreach($murids as $murid)
+                                        <option value="{{ $murid->name }}" data-saldo="{{ $murid->saldo }}">
+                                            {{ $murid->name }} - Kelas {{ $murid->kelas }} (Saldo: Rp {{ number_format($murid->saldo, 0, ',', '.') }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div id="saldo_display" class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 font-semibold" style="display: none;">
+                                    <span class="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+                                    <span id="saldo_text"></span>
+                                </div>
                             </div>
                             
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Subtotal</label>
-                                <input type="text" class="subtotal-display w-full p-2 border border-gray-300 rounded-md bg-gray-100" readonly>
+                            <!-- Teacher Section -->
+                            <div id="guru_section" class="space-y-2" style="display: none;">
+                                <label class="block text-sm font-semibold text-gray-700">Nama Guru</label>
+                                <input type="text" name="nama_pelanggan_guru" id="nama_guru" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" placeholder="Masukkan nama guru...">
+                            </div>
+                            
+                            <!-- Staff Section -->
+                            <div id="staff_section" class="space-y-2" style="display: none;">
+                                <label class="block text-sm font-semibold text-gray-700">Nama Staff</label>
+                                <input type="text" name="nama_pelanggan_staff" id="nama_staff" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" placeholder="Masukkan nama staff...">
                             </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Item</label>
-                            <textarea name="orderItems[0][catatan_item]" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" rows="2" placeholder="Tambahan, kurang pedas, dll..."></textarea>
+                        <input type="hidden" name="nama_pelanggan" id="nama_pelanggan">
+                        <input type="hidden" name="saldo_murid" id="saldo_murid" value="0">
+                    </div>
+                </div>
+                
+                <!-- Order Items Card -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+                    <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4">
+                        <h2 class="text-xl font-bold text-white flex items-center">
+                            <span class="bg-white bg-opacity-20 rounded-full p-2 mr-3">🛒</span>
+                            Daftar Pesanan
+                        </h2>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div id="order_items" class="space-y-4">
+                            <div class="order-item bg-gray-50 rounded-xl p-4 border-2 border-gray-200 hover:border-gray-300 transition-all duration-200">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                    <!-- Product Selection -->
+                                    <div class="lg:col-span-2 space-y-2">
+                                        <label class="block text-sm font-semibold text-gray-700">Produk</label>
+                                        <select name="orderItems[0][product_id]" class="product-select w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-200" required>
+                                            <option value="">Pilih produk...</option>
+                                            @foreach($products as $product)
+                                                <option value="{{ $product->id }}" data-harga="{{ $product->harga }}" data-stok="{{ $product->stok }}">
+                                                    {{ $product->nama_produk }} - Rp {{ number_format($product->harga, 0, ',', '.') }}
+                                                    @if($product->stok > 0)
+                                                        (Stok: {{ $product->stok }})
+                                                    @else
+                                                        (HABIS)
+                                                    @endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Quantity -->
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-semibold text-gray-700">Jumlah</label>
+                                        <input type="number" name="orderItems[0][jumlah]" class="jumlah-input w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-200" min="1" value="1" required>
+                                        <div class="stok-hint text-xs font-medium"></div>
+                                    </div>
+                                    
+                                    <!-- Subtotal -->
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-semibold text-gray-700">Subtotal</label>
+                                        <input type="text" class="subtotal-display w-full p-3 border-2 border-gray-200 rounded-xl bg-gray-100 font-semibold text-blue-600" readonly>
+                                    </div>
+                                </div>
+                                
+                                <!-- Item Notes -->
+                                <div class="space-y-2 mb-4">
+                                    <label class="block text-sm font-semibold text-gray-700">Catatan Item</label>
+                                    <textarea name="orderItems[0][catatan_item]" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-200" rows="2" placeholder="Tambahan, kurang pedas, dll..."></textarea>
+                                </div>
+                                
+                                <!-- Stock Warning -->
+                                <div class="stok-warning bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 font-semibold" style="display: none;">
+                                    <span class="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                                    <span>🚫 Produk ini habis stok!</span>
+                                </div>
+                                
+                                <input type="hidden" name="orderItems[0][harga_satuan]" class="harga-satuan">
+                                <input type="hidden" name="orderItems[0][subtotal]" class="subtotal-value">
+                                
+                                <button type="button" class="remove-item bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 mt-3" style="display: none;">
+                                    🗑️ Hapus Item
+                                </button>
+                            </div>
                         </div>
                         
-                        <div class="stok-warning text-red-600 font-semibold" style="display: none;"></div>
-                        
-                        <input type="hidden" name="orderItems[0][harga_satuan]" class="harga-satuan">
-                        <input type="hidden" name="orderItems[0][subtotal]" class="subtotal-value">
-                        
-                        <button type="button" class="remove-item bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 mt-2" style="display: none;">Hapus Item</button>
+                        <button type="button" id="add_item" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            ➕ Tambah Item
+                        </button>
                     </div>
                 </div>
                 
-                <button type="button" id="add_item" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">+ Tambah Item</button>
-            </div>
-            
-            <!-- Ringkasan Pesanan -->
-            <div class="mb-8 p-4 border rounded-lg bg-gray-50">
-                <h2 class="text-lg font-semibold mb-4 text-gray-700">💳 Ringkasan Pesanan</h2>
-                
-                <div class="mb-4">
-                    <div class="text-2xl font-bold text-blue-600">
-                        TOTAL HARGA: Rp <span id="total_display">0</span>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Metode Pembayaran</label>
-                        <select name="metode_pembayaran" id="metode_pembayaran" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" required>
-                            <option value="tunai">💵 Tunai</option>
-                        </select>
+                <!-- Payment Summary Card -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+                    <div class="bg-gradient-to-r from-purple-500 to-pink-600 px-6 py-4">
+                        <h2 class="text-xl font-bold text-white flex items-center">
+                            <span class="bg-white bg-opacity-20 rounded-full p-2 mr-3">💳</span>
+                            Ringkasan Pembayaran
+                        </h2>
                     </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah Bayar</label>
-                        <input type="number" name="jumlah_bayar" id="jumlah_bayar" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" min="0" step="0.01" required>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2" id="kembalian_label">Kembalian</label>
-                        <input type="text" id="kembalian_display" class="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-green-600 font-semibold" readonly>
+                    <div class="p-6">
+                        <!-- Total Display -->
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 mb-6 text-center">
+                            <div class="text-white text-3xl font-bold">
+                                TOTAL HARGA
+                            </div>
+                            <div class="text-white text-4xl font-bold mt-2">
+                                Rp <span id="total_display">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Payment Method -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-700">Metode Pembayaran</label>
+                                <select name="metode_pembayaran" id="metode_pembayaran" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200" required>
+                                    <option value="tunai">💵 Tunai</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Payment Amount -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-700">Jumlah Bayar</label>
+                                <input type="number" name="jumlah_bayar" id="jumlah_bayar" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200" min="0" step="0.01" required>
+                            </div>
+                            
+                            <!-- Change/Remaining Balance -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-700" id="kembalian_label">Kembalian</label>
+                                <input type="text" id="kembalian_display" class="w-full p-3 border-2 border-gray-200 rounded-xl bg-gray-100 text-green-600 font-bold" readonly>
+                            </div>
+                        </div>
+                        
+                        <!-- Balance Warning -->
+                        <div id="saldo_warning" class="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 font-semibold" style="display: none;">
+                            <span class="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                            ⚠️ Saldo tidak mencukupi untuk pesanan ini!
+                        </div>
+                        
+                        <input type="hidden" name="total_harga" id="total_harga">
+                        <input type="hidden" name="kembalian" id="kembalian">
                     </div>
                 </div>
                 
-                <div id="saldo_warning" class="text-red-600 font-semibold mt-2" style="display: none;">
-                    ⚠️ Saldo tidak mencukupi untuk pesanan ini!
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-12 py-4 rounded-2xl font-bold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                        🚀 Buat Pesanan
+                    </button>
                 </div>
-                
-                <input type="hidden" name="total_harga" id="total_harga">
-                <input type="hidden" name="kembalian" id="kembalian">
-            </div>
-            
-            <div class="flex justify-end">
-                <button type="submit" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 font-semibold">
-                    Buat Pesanan
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -182,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('guru_section').style.display = 'none';
         document.getElementById('staff_section').style.display = 'none';
         
-        // Show relevant section
+        // Show relevant section with animation
         if (value === 'murid') {
             document.getElementById('murid_section').style.display = 'block';
             updateMetodePembayaran();
@@ -208,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const saldo = selectedOption.getAttribute('data-saldo') || 0;
         
         document.getElementById('saldo_murid').value = saldo;
-        document.getElementById('saldo_display').textContent = 'Saldo: Rp ' + new Intl.NumberFormat('id-ID').format(saldo);
+        document.getElementById('saldo_text').textContent = 'Saldo: Rp ' + new Intl.NumberFormat('id-ID').format(saldo);
         document.getElementById('saldo_display').style.display = this.value ? 'block' : 'none';
         
         updateNamaPelanggan();
@@ -254,8 +321,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const stok = parseInt(selectedOption.getAttribute('data-stok')) || 0;
             
             item.querySelector('.harga-satuan').value = harga;
-            item.querySelector('.stok-hint').textContent = stok > 0 ? `Stok tersedia: ${stok}` : 'Stok habis';
-            item.querySelector('.stok-hint').className = stok > 0 ? 'text-xs text-green-600 mt-1' : 'text-xs text-red-600 mt-1';
+            item.querySelector('.stok-hint').textContent = stok > 0 ? `✅ Stok tersedia: ${stok}` : '❌ Stok habis';
+            item.querySelector('.stok-hint').className = stok > 0 ? 'text-xs font-medium text-green-600' : 'text-xs font-medium text-red-600';
             
             const jumlahInput = item.querySelector('.jumlah-input');
             jumlahInput.max = stok;
@@ -263,7 +330,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (stok <= 0) {
                 jumlahInput.value = 0;
                 jumlahInput.disabled = true;
-                item.querySelector('.stok-warning').textContent = '🚫 Produk ini habis stok!';
                 item.querySelector('.stok-warning').style.display = 'block';
             } else {
                 jumlahInput.disabled = false;
@@ -332,11 +398,11 @@ document.addEventListener('DOMContentLoaded', function() {
             jumlahBayarInput.value = total;
             jumlahBayarInput.disabled = true;
             kembalianLabel.textContent = 'Sisa Saldo';
-            kembalianDisplay.className = 'w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-blue-600 font-semibold';
+            kembalianDisplay.className = 'w-full p-3 border-2 border-gray-200 rounded-xl bg-gray-100 text-blue-600 font-bold';
         } else {
             jumlahBayarInput.disabled = false;
             kembalianLabel.textContent = 'Kembalian';
-            kembalianDisplay.className = 'w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-green-600 font-semibold';
+            kembalianDisplay.className = 'w-full p-3 border-2 border-gray-200 rounded-xl bg-gray-100 text-green-600 font-bold';
         }
         
         updateKembalian();
