@@ -420,13 +420,27 @@
                     <!-- Nama Guru -->
                     <div id="guru_section" class="form-group hidden">
                         <label class="form-label">Nama Guru *</label>
-                        <input type="text" name="nama_pelanggan_guru" id="nama_guru" class="form-input" placeholder="Masukkan nama guru...">
+                        <select name="nama_pelanggan_guru" id="nama_guru" class="form-select">
+                            <option value="">Pilih guru...</option>
+                            @foreach($gurus as $guru)
+                                <option value="{{ $guru->name }}">
+                                    {{ $guru->name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                     
                     <!-- Nama Staff -->
                     <div id="staff_section" class="form-group hidden">
                         <label class="form-label">Nama Staff *</label>
-                        <input type="text" name="nama_pelanggan_staff" id="nama_staff" class="form-input" placeholder="Masukkan nama staff...">
+                        <select name="nama_pelanggan_staff" id="nama_staff" class="form-select">
+                            <option value="">Pilih staff...</option>
+                            @foreach($staffs as $staff)
+                                <option value="{{ $staff->name }}">
+                                    {{ $staff->name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
                 
@@ -976,6 +990,43 @@ document.addEventListener('DOMContentLoaded', function() {
             addProductSearch();
         }, 100);
     });
+});
+
+document.getElementById('jenis_pelanggan').addEventListener('change', function() {
+    const jenisPelanggan = this.value;
+    
+    // Sembunyikan semua section terlebih dahulu
+    document.getElementById('murid_section').classList.add('hidden');
+    document.getElementById('guru_section').classList.add('hidden');
+    document.getElementById('staff_section').classList.add('hidden');
+    
+    // Reset semua input
+    document.getElementById('nama_murid').value = '';
+    document.getElementById('nama_guru').value = '';
+    document.getElementById('nama_staff').value = '';
+    
+    // Tampilkan section yang sesuai
+    if (jenisPelanggan === 'murid') {
+        document.getElementById('murid_section').classList.remove('hidden');
+    } else if (jenisPelanggan === 'guru') {
+        document.getElementById('guru_section').classList.remove('hidden');
+    } else if (jenisPelanggan === 'staff') {
+        document.getElementById('staff_section').classList.remove('hidden');
+    }
+});
+
+// Untuk mengupdate hidden field nama_pelanggan
+document.getElementById('nama_murid').addEventListener('change', function() {
+    document.getElementById('nama_pelanggan').value = this.value;
+    document.getElementById('saldo_murid').value = this.options[this.selectedIndex].getAttribute('data-saldo');
+});
+
+document.getElementById('nama_guru').addEventListener('change', function() {
+    document.getElementById('nama_pelanggan').value = this.value;
+});
+
+document.getElementById('nama_staff').addEventListener('change', function() {
+    document.getElementById('nama_pelanggan').value = this.value;
 });
 </script>
 @endsection
