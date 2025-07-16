@@ -979,13 +979,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-    const jenisPelangganSelect = document.getElementById('jenis_pelanggan');
+    // Inisialisasi - sembunyikan semua section kecuali jenis pelanggan
+    document.getElementById('murid_section').classList.add('hidden');
+    document.getElementById('guru_section').classList.add('hidden');
+    document.getElementById('staff_section').classList.add('hidden');
     
-    // Fungsi untuk menangani perubahan jenis pelanggan
-    function handleJenisPelangganChange() {
-        const selectedValue = jenisPelangganSelect.value;
+    // Tangani perubahan jenis pelanggan
+    document.getElementById('jenis_pelanggan').addEventListener('change', function() {
+        const selectedValue = this.value;
         
-        // Sembunyikan semua section terlebih dahulu
+        // Sembunyikan semua section
         document.getElementById('murid_section').classList.add('hidden');
         document.getElementById('guru_section').classList.add('hidden');
         document.getElementById('staff_section').classList.add('hidden');
@@ -994,6 +997,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('nama_murid').value = '';
         document.getElementById('nama_guru').value = '';
         document.getElementById('nama_staff').value = '';
+        document.getElementById('nama_pelanggan').value = '';
         
         // Tampilkan hanya section yang sesuai
         if (selectedValue === 'murid') {
@@ -1003,42 +1007,21 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (selectedValue === 'staff') {
             document.getElementById('staff_section').classList.remove('hidden');
         }
-    }
+    });
     
-    // Event listener untuk perubahan jenis pelanggan
-    jenisPelangganSelect.addEventListener('change', handleJenisPelangganChange);
+    // Update hidden field nama_pelanggan
+    document.getElementById('nama_murid').addEventListener('change', function() {
+        document.getElementById('nama_pelanggan').value = this.value;
+        document.getElementById('saldo_murid').value = this.options[this.selectedIndex].getAttribute('data-saldo') || '0';
+    });
     
-    // Inisialisasi awal
-    handleJenisPelangganChange();
+    document.getElementById('nama_guru').addEventListener('input', function() {
+        document.getElementById('nama_pelanggan').value = this.value;
+    });
     
-    // Fungsi untuk mengupdate hidden field nama_pelanggan
-    function updateNamaPelanggan() {
-        const selectedValue = jenisPelangganSelect.value;
-        let nama = '';
-        
-        if (selectedValue === 'murid') {
-            nama = document.getElementById('nama_murid').value;
-        } else if (selectedValue === 'guru') {
-            nama = document.getElementById('nama_guru').value;
-        } else if (selectedValue === 'staff') {
-            nama = document.getElementById('nama_staff').value;
-        }
-        
-        document.getElementById('nama_pelanggan').value = nama;
-        
-        // Update saldo murid jika memilih murid
-        if (selectedValue === 'murid') {
-            const selectedOption = document.getElementById('nama_murid').options[document.getElementById('nama_murid').selectedIndex];
-            if (selectedOption) {
-                document.getElementById('saldo_murid').value = selectedOption.getAttribute('data-saldo') || '0';
-            }
-        }
-    }
-    
-    // Event listeners untuk perubahan input nama
-    document.getElementById('nama_murid').addEventListener('change', updateNamaPelanggan);
-    document.getElementById('nama_guru').addEventListener('input', updateNamaPelanggan);
-    document.getElementById('nama_staff').addEventListener('input', updateNamaPelanggan);
+    document.getElementById('nama_staff').addEventListener('input', function() {
+        document.getElementById('nama_pelanggan').value = this.value;
+    });
 });
 </script>
 @endsection
