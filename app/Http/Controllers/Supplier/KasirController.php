@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Supplier;
+use App\Http\Controllers\Controller;
 
 use App\Models\Product;
 use App\Models\Murid;
