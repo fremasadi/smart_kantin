@@ -980,62 +980,65 @@ document.addEventListener('DOMContentLoaded', function() {
 
 document.addEventListener('DOMContentLoaded', function() {
     const jenisPelangganSelect = document.getElementById('jenis_pelanggan');
-    const muridSection = document.getElementById('murid_section');
-    const guruSection = document.getElementById('guru_section');
-    const staffSection = document.getElementById('staff_section');
-    const namaPelangganHidden = document.getElementById('nama_pelanggan');
     
-    // Fungsi untuk menyembunyikan semua section
-    function hideAllSections() {
-        muridSection.classList.add('hidden');
-        guruSection.classList.add('hidden');
-        staffSection.classList.add('hidden');
-    }
-    
-    // Fungsi untuk mengupdate nama pelanggan di hidden field
-    function updateNamaPelanggan(value) {
-        namaPelangganHidden.value = value;
+    // Fungsi untuk menangani perubahan jenis pelanggan
+    function handleJenisPelangganChange() {
+        const selectedValue = jenisPelangganSelect.value;
+        
+        // Sembunyikan semua section terlebih dahulu
+        document.getElementById('murid_section').classList.add('hidden');
+        document.getElementById('guru_section').classList.add('hidden');
+        document.getElementById('staff_section').classList.add('hidden');
+        
+        // Reset semua input
+        document.getElementById('nama_murid').value = '';
+        document.getElementById('nama_guru').value = '';
+        document.getElementById('nama_staff').value = '';
+        
+        // Tampilkan hanya section yang sesuai
+        if (selectedValue === 'murid') {
+            document.getElementById('murid_section').classList.remove('hidden');
+        } else if (selectedValue === 'guru') {
+            document.getElementById('guru_section').classList.remove('hidden');
+        } else if (selectedValue === 'staff') {
+            document.getElementById('staff_section').classList.remove('hidden');
+        }
     }
     
     // Event listener untuk perubahan jenis pelanggan
-    jenisPelangganSelect.addEventListener('change', function() {
-        const selectedValue = this.value;
-        
-        hideAllSections();
+    jenisPelangganSelect.addEventListener('change', handleJenisPelangganChange);
+    
+    // Inisialisasi awal
+    handleJenisPelangganChange();
+    
+    // Fungsi untuk mengupdate hidden field nama_pelanggan
+    function updateNamaPelanggan() {
+        const selectedValue = jenisPelangganSelect.value;
+        let nama = '';
         
         if (selectedValue === 'murid') {
-            muridSection.classList.remove('hidden');
-            // Reset nilai input lainnya
-            document.getElementById('nama_guru').value = '';
-            document.getElementById('nama_staff').value = '';
+            nama = document.getElementById('nama_murid').value;
         } else if (selectedValue === 'guru') {
-            guruSection.classList.remove('hidden');
-            // Reset nilai input lainnya
-            document.getElementById('nama_murid').value = '';
-            document.getElementById('nama_staff').value = '';
+            nama = document.getElementById('nama_guru').value;
         } else if (selectedValue === 'staff') {
-            staffSection.classList.remove('hidden');
-            // Reset nilai input lainnya
-            document.getElementById('nama_murid').value = '';
-            document.getElementById('nama_guru').value = '';
+            nama = document.getElementById('nama_staff').value;
         }
-    });
+        
+        document.getElementById('nama_pelanggan').value = nama;
+        
+        // Update saldo murid jika memilih murid
+        if (selectedValue === 'murid') {
+            const selectedOption = document.getElementById('nama_murid').options[document.getElementById('nama_murid').selectedIndex];
+            if (selectedOption) {
+                document.getElementById('saldo_murid').value = selectedOption.getAttribute('data-saldo') || '0';
+            }
+        }
+    }
     
-    // Event listener untuk input nama murid
-    document.getElementById('nama_murid').addEventListener('change', function() {
-        updateNamaPelanggan(this.value);
-        document.getElementById('saldo_murid').value = this.options[this.selectedIndex].getAttribute('data-saldo');
-    });
-    
-    // Event listener untuk input nama guru
-    document.getElementById('nama_guru').addEventListener('input', function() {
-        updateNamaPelanggan(this.value);
-    });
-    
-    // Event listener untuk input nama staff
-    document.getElementById('nama_staff').addEventListener('input', function() {
-        updateNamaPelanggan(this.value);
-    });
+    // Event listeners untuk perubahan input nama
+    document.getElementById('nama_murid').addEventListener('change', updateNamaPelanggan);
+    document.getElementById('nama_guru').addEventListener('input', updateNamaPelanggan);
+    document.getElementById('nama_staff').addEventListener('input', updateNamaPelanggan);
 });
 </script>
 @endsection
