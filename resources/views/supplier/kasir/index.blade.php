@@ -420,27 +420,13 @@
                     <!-- Nama Guru -->
                     <div id="guru_section" class="form-group hidden">
                         <label class="form-label">Nama Guru *</label>
-                        <select name="nama_pelanggan_guru" id="nama_guru" class="form-select">
-                            <option value="">Pilih guru...</option>
-                            @foreach($gurus as $guru)
-                                <option value="{{ $guru->name }}">
-                                    {{ $guru->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <input type="text" name="nama_pelanggan_guru" id="nama_guru" class="form-input" placeholder="Masukkan nama guru...">
                     </div>
                     
                     <!-- Nama Staff -->
                     <div id="staff_section" class="form-group hidden">
                         <label class="form-label">Nama Staff *</label>
-                        <select name="nama_pelanggan_staff" id="nama_staff" class="form-select">
-                            <option value="">Pilih staff...</option>
-                            @foreach($staffs as $staff)
-                                <option value="{{ $staff->name }}">
-                                    {{ $staff->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <input type="text" name="nama_pelanggan_staff" id="nama_staff" class="form-input" placeholder="Masukkan nama staff...">
                     </div>
                 </div>
                 
@@ -992,41 +978,64 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-document.getElementById('jenis_pelanggan').addEventListener('change', function() {
-    const jenisPelanggan = this.value;
+document.addEventListener('DOMContentLoaded', function() {
+    const jenisPelangganSelect = document.getElementById('jenis_pelanggan');
+    const muridSection = document.getElementById('murid_section');
+    const guruSection = document.getElementById('guru_section');
+    const staffSection = document.getElementById('staff_section');
+    const namaPelangganHidden = document.getElementById('nama_pelanggan');
     
-    // Sembunyikan semua section terlebih dahulu
-    document.getElementById('murid_section').classList.add('hidden');
-    document.getElementById('guru_section').classList.add('hidden');
-    document.getElementById('staff_section').classList.add('hidden');
-    
-    // Reset semua input
-    document.getElementById('nama_murid').value = '';
-    document.getElementById('nama_guru').value = '';
-    document.getElementById('nama_staff').value = '';
-    
-    // Tampilkan section yang sesuai
-    if (jenisPelanggan === 'murid') {
-        document.getElementById('murid_section').classList.remove('hidden');
-    } else if (jenisPelanggan === 'guru') {
-        document.getElementById('guru_section').classList.remove('hidden');
-    } else if (jenisPelanggan === 'staff') {
-        document.getElementById('staff_section').classList.remove('hidden');
+    // Fungsi untuk menyembunyikan semua section
+    function hideAllSections() {
+        muridSection.classList.add('hidden');
+        guruSection.classList.add('hidden');
+        staffSection.classList.add('hidden');
     }
-});
-
-// Untuk mengupdate hidden field nama_pelanggan
-document.getElementById('nama_murid').addEventListener('change', function() {
-    document.getElementById('nama_pelanggan').value = this.value;
-    document.getElementById('saldo_murid').value = this.options[this.selectedIndex].getAttribute('data-saldo');
-});
-
-document.getElementById('nama_guru').addEventListener('change', function() {
-    document.getElementById('nama_pelanggan').value = this.value;
-});
-
-document.getElementById('nama_staff').addEventListener('change', function() {
-    document.getElementById('nama_pelanggan').value = this.value;
+    
+    // Fungsi untuk mengupdate nama pelanggan di hidden field
+    function updateNamaPelanggan(value) {
+        namaPelangganHidden.value = value;
+    }
+    
+    // Event listener untuk perubahan jenis pelanggan
+    jenisPelangganSelect.addEventListener('change', function() {
+        const selectedValue = this.value;
+        
+        hideAllSections();
+        
+        if (selectedValue === 'murid') {
+            muridSection.classList.remove('hidden');
+            // Reset nilai input lainnya
+            document.getElementById('nama_guru').value = '';
+            document.getElementById('nama_staff').value = '';
+        } else if (selectedValue === 'guru') {
+            guruSection.classList.remove('hidden');
+            // Reset nilai input lainnya
+            document.getElementById('nama_murid').value = '';
+            document.getElementById('nama_staff').value = '';
+        } else if (selectedValue === 'staff') {
+            staffSection.classList.remove('hidden');
+            // Reset nilai input lainnya
+            document.getElementById('nama_murid').value = '';
+            document.getElementById('nama_guru').value = '';
+        }
+    });
+    
+    // Event listener untuk input nama murid
+    document.getElementById('nama_murid').addEventListener('change', function() {
+        updateNamaPelanggan(this.value);
+        document.getElementById('saldo_murid').value = this.options[this.selectedIndex].getAttribute('data-saldo');
+    });
+    
+    // Event listener untuk input nama guru
+    document.getElementById('nama_guru').addEventListener('input', function() {
+        updateNamaPelanggan(this.value);
+    });
+    
+    // Event listener untuk input nama staff
+    document.getElementById('nama_staff').addEventListener('input', function() {
+        updateNamaPelanggan(this.value);
+    });
 });
 </script>
 @endsection
