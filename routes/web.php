@@ -36,16 +36,10 @@ Route::middleware(['auth', 'role:kasir'])->group(function () {
     Route::get('/laporan-penjualan', [LaporanController::class, 'index'])->name('supplier.laporan');
     Route::get('/laporan-penjualan/export', [LaporanController::class, 'export'])->name('supplier.laporan.export');
 // Route baru untuk kasir
-Route::prefix('kasir')->name('kasir.')->group(function () {
-    Route::get('/', [KasirController::class, 'index'])->name('index');
-    Route::get('/products', [KasirController::class, 'getProducts'])->name('products');
-    Route::get('/customers', [KasirController::class, 'getCustomers'])->name('customers');
-    Route::get('/produk-populer', [KasirController::class, 'getProdukPopuler'])->name('produk-populer');
-    Route::get('/transaksi-terakhir', [KasirController::class, 'getTransaksiTerakhir'])->name('transaksi-terakhir');
-    Route::post('/store', [KasirController::class, 'store'])->name('store');
-    Route::get('/order/{id}', [KasirController::class, 'show'])->name('show');
-    Route::get('/print/{id}', [KasirController::class, 'printReceipt'])->name('print');
-});
+Route::get('/kasir', [KasirController::class, 'index'])->name('kasir.index');
+Route::post('/kasir', [KasirController::class, 'store'])->name('kasir.store');
+Route::post('/kasir/get-murid-saldo', [KasirController::class, 'getMuridSaldo'])->name('kasir.getMuridSaldo');
+Route::post('/kasir/get-product-info', [KasirController::class, 'getProductInfo'])->name('kasir.getProductInfo');
     Route::post('/logout', function () {
         Auth::logout();
         return redirect('/login');
