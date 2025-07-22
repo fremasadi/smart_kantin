@@ -164,7 +164,7 @@
     <div class="login-container">
         <div class="login-header">
             <h1>SmartKantin</h1>
-            <h2>Login Supllier</h2>
+            <h2>Login Kasir</h2>
         </div>
 
         <form method="POST" action="{{ route('supplier.login.submit') }}">
